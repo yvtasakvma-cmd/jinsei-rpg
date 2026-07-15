@@ -231,6 +231,13 @@
     .pwa-update { position: fixed; z-index: 80; left: 50%; bottom: calc(82px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; justify-content: space-between; gap: 12px; width: min(calc(100% - 24px), 620px); padding: 12px 13px 12px 15px; border: 1px solid rgba(104,225,181,.5); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
     .pwa-update[hidden] { display: none; }
     .pwa-update span { min-width: 0; font-size: 12px; line-height: 1.5; }
+    .reward-limit-alert { position: fixed; inset: 0; z-index: 320; display: grid; place-items: center; padding: 20px; background: rgba(2,5,12,.82); backdrop-filter: blur(8px); }
+    .reward-limit-alert[hidden] { display: none; }
+    .reward-limit-panel { width: min(100%,460px); padding: 24px; border: 1px solid rgba(242,201,109,.68); border-radius: 24px; background: var(--surface); box-shadow: 0 24px 80px rgba(0,0,0,.58); text-align: center; }
+    .reward-limit-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 14px; border-radius: 22px; background: rgba(242,201,109,.15); color: var(--gold); font-size: 36px; animation: alarm-pulse .8s ease-in-out infinite alternate; }
+    .reward-limit-panel h2 { margin: 0; color: var(--gold); font-size: 24px; }
+    .reward-limit-panel p { margin: 10px 0 0; color: var(--muted); line-height: 1.7; }
+    @keyframes alarm-pulse { to { transform: scale(1.08); box-shadow: 0 0 30px rgba(242,201,109,.24); } }
     @media (min-width: 640px) {
       main { padding-left: 24px; padding-right: 24px; }
       .modal-backdrop { align-items: center; padding: 24px; }
@@ -311,6 +318,17 @@
     <span>新しいバージョンを利用できます。</span>
     <button class="btn small-btn primary" type="button" data-action="apply-pwa-update">更新する</button>
   </div>
+  <div id="reward-limit-alert" class="reward-limit-alert" role="alertdialog" aria-modal="true" aria-labelledby="reward-limit-title" hidden>
+    <div class="reward-limit-panel">
+      <div class="reward-limit-icon" aria-hidden="true">⏰</div>
+      <h2 id="reward-limit-title">報酬タイマー終了</h2>
+      <p><strong id="reward-limit-name">報酬</strong>の使用可能時間が0になりました。</p>
+      <div class="button-row" style="justify-content:center;margin-top:20px">
+        <button class="btn primary" type="button" data-action="stop-reward-alarm">通知を停止</button>
+        <button class="btn gold" type="button" data-action="stop-and-finish-reward">停止して精算</button>
+      </div>
+    </div>
+  </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -318,7 +336,7 @@
     'use strict';
 
     const STORAGE_KEY = 'jinseiRpgState';
-    const SCHEMA_VERSION = 7;
+    const SCHEMA_VERSION = 8;
 
     const uid = (prefix = 'id') => {
       const random = globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -397,7 +415,7 @@
         schemaVersion: SCHEMA_VERSION,
         settings: {
           appName: '人生RPG', theme: 'dark', pointDecimals: 2, timeFormat: 'hms', weekStartsOn: 1,
-          showGraph: true, sound: false, vibration: false, confirmations: true, levelMode:'points',
+          showGraph: true, sound: false, vibration: false, confirmations: true, rewardTimerAlarm:true, rewardAlarmSound:true, rewardAlarmVibration:true, levelMode:'points',
           waitTimerDefinition: {name:'72時間タイマー', durationHours:72, completeLabel:'設定時間経過・解禁', color:'#68e1b5', icon:'⏳'},
           levels: [
             {level:1, name:'旅立ち', requiredPoints:0}, {level:2, name:'見習い', requiredPoints:100},
@@ -449,6 +467,8 @@
     let statsPeriod = 'week';
     let toastTimer = 0;
     let finishing = false;
+    let rewardAlarmInterval = 0;
+    let rewardAlarmAudioContext = null;
 
     function saveState() {
       state.schemaVersion = SCHEMA_VERSION;
@@ -676,6 +696,50 @@
       finishing = false;
     }
     function confirmAction(message) { return !state.settings.confirmations || globalThis.confirm(message); }
+
+    function ensureRewardAlarmAudio() {
+      if (state.settings.rewardAlarmSound === false) return null;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return null;
+        if (!rewardAlarmAudioContext) rewardAlarmAudioContext = new AudioContext();
+        if (rewardAlarmAudioContext.state === 'suspended') rewardAlarmAudioContext.resume().catch(()=>{});
+        return rewardAlarmAudioContext;
+      } catch { return null; }
+    }
+    function rewardAlarmBeep() {
+      const context=ensureRewardAlarmAudio();if(!context)return;
+      try {
+        const oscillator=context.createOscillator();const gain=context.createGain();
+        oscillator.connect(gain);gain.connect(context.destination);oscillator.type='square';oscillator.frequency.value=740;
+        gain.gain.setValueAtTime(.09,context.currentTime);gain.gain.exponentialRampToValueAtTime(.001,context.currentTime+.42);
+        oscillator.start();oscillator.stop(context.currentTime+.42);
+      } catch {}
+    }
+    function shouldRewardLimitAlarm(timer=state.activeRewardTimer) {
+      return Boolean(timer&&timer.status==='limit'&&!timer.rewardAlarmDismissedAt&&state.settings.rewardTimerAlarm!==false);
+    }
+    function rewardAlarmPulse() {
+      if(state.settings.rewardAlarmVibration!==false&&typeof navigator!=='undefined'&&typeof navigator.vibrate==='function')navigator.vibrate([500,250,500]);
+      if(state.settings.rewardAlarmSound!==false)rewardAlarmBeep();
+    }
+    function startRewardLimitAlarm() {
+      const timer=state.activeRewardTimer;if(!shouldRewardLimitAlarm(timer))return;
+      document.getElementById('reward-limit-name').textContent=timer.snapshot?.rewardName||'報酬';
+      document.getElementById('reward-limit-alert').hidden=false;
+      if(rewardAlarmInterval)return;
+      rewardAlarmPulse();
+      rewardAlarmInterval=setInterval(rewardAlarmPulse,1800);
+    }
+    function stopRewardLimitAlarm(markDismissed=false) {
+      if(rewardAlarmInterval){clearInterval(rewardAlarmInterval);rewardAlarmInterval=0;}
+      if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function')navigator.vibrate(0);
+      document.getElementById('reward-limit-alert').hidden=true;
+      const timer=state.activeRewardTimer;
+      if(markDismissed&&timer?.status==='limit'&&!timer.rewardAlarmDismissedAt){timer.rewardAlarmDismissedAt=isoNow();saveState();}
+    }
+    function stopAndFinishReward() {stopRewardLimitAlarm(true);openFinishReward();}
+    function syncRewardLimitAlarm() {if(shouldRewardLimitAlarm())startRewardLimitAlarm();else stopRewardLimitAlarm(false);}
 
     function nav(screen) {
       currentScreen = screen;
@@ -959,6 +1023,7 @@
       renderStats();
       renderHistory();
       renderSettings();
+      syncRewardLimitAlarm();
     }
 
     function liveTick() {
@@ -978,7 +1043,7 @@
         const affordable = rewardAffordableMs(rewardTimer);
         if (rewardTimer.status === 'running' && raw >= affordable) {
           rewardTimer.accumulatedMs = Math.max(0, affordable);
-          rewardTimer.status = 'limit'; rewardTimer.pausedAt = isoNow(); saveState(); render();
+          rewardTimer.status = 'limit'; rewardTimer.pausedAt = isoNow(); rewardTimer.limitReachedAt=isoNow(); rewardTimer.rewardAlarmDismissedAt=null; saveState(); render();
         }
         const elapsed = activeRewardElapsedMs(rewardTimer) / 1000;
         const used = calculateRewardPointCost(elapsed, rewardTimer.snapshot);
@@ -1062,8 +1127,9 @@
       if (!reward) return showToast('時間報酬を選択してください。');
       if (!(reward.pointCostPerMinute > 0)) return showToast('1分あたりの必要ポイントを設定してください。');
       if (!(pointSummary().balance > 0)) return showToast('使用できるポイントがありません。');
+      stopRewardLimitAlarm(false);ensureRewardAlarmAudio();
       const now = isoNow();
-      state.activeRewardTimer = {sessionId:uid('reward-session'),status:'running',startedAt:now,lastStartedAt:now,pausedAt:null,accumulatedMs:0,snapshot:rewardSnapshot(reward),createdAt:now};
+      state.activeRewardTimer = {sessionId:uid('reward-session'),status:'running',startedAt:now,lastStartedAt:now,pausedAt:null,accumulatedMs:0,limitReachedAt:null,rewardAlarmDismissedAt:null,snapshot:rewardSnapshot(reward),createdAt:now};
       saveState(); render(); showToast(`${reward.name}の報酬タイマーを開始しました。`);
     }
     function pauseReward() {
@@ -1079,7 +1145,7 @@
     }
     function cancelReward() {
       if (!state.activeRewardTimer || !confirmAction('報酬タイマーをポイント消費なしでキャンセルしますか？')) return;
-      state.activeRewardTimer=null; saveState(); render(); showToast('報酬タイマーをキャンセルしました。');
+      stopRewardLimitAlarm(false);state.activeRewardTimer=null; saveState(); render(); showToast('報酬タイマーをキャンセルしました。');
     }
     function openFinishReward() {
       const timer=state.activeRewardTimer;
@@ -1109,7 +1175,7 @@
         rewardType:'point_time',startAt:timer.startedAt,endAt,durationSeconds,usedPoints,usedCalories:0,
         pointCostPerMinute:timer.snapshot.pointCostPerMinute,balanceAfter:balance-usedPoints,calorieBalanceAfter:null,memo:String(data.get('memo')||''),createdAt:isoNow(),updatedAt:isoNow()
       });
-      state.activeRewardTimer=null;saveState();closeModal();render();showToast('報酬を精算し、ポイントを消費しました。');
+      stopRewardLimitAlarm(false);state.activeRewardTimer=null;saveState();closeModal();render();showToast('報酬を精算し、ポイントを消費しました。');
     }
     function useFixedReward(id,button) {
       const reward=getReward(id);
@@ -1259,7 +1325,7 @@
     }
 
     function openDisplaySettings() {
-      openModal('表示・動作設定',`<form id="display-settings-form" class="form-grid"><label>アプリ名<input name="appName" maxlength="40" value="${esc(state.settings.appName)}" required></label><div class="form-columns"><label>配色<select name="theme"><option value="dark" ${state.settings.theme!=='light'?'selected':''}>ダークモード</option><option value="light" ${state.settings.theme==='light'?'selected':''}>ライトモード</option></select></label><label>ポイント小数桁数<input name="pointDecimals" type="number" min="0" max="6" step="1" value="${num(state.settings.pointDecimals)}"></label></div><div class="form-columns"><label>時間表示<select name="timeFormat"><option value="hms" ${state.settings.timeFormat!=='decimal'?'selected':''}>時間・分</option><option value="decimal" ${state.settings.timeFormat==='decimal'?'selected':''}>小数時間</option></select></label><label>週の開始曜日<select name="weekStartsOn"><option value="1" ${num(state.settings.weekStartsOn)===1?'selected':''}>月曜日</option><option value="0" ${num(state.settings.weekStartsOn)===0?'selected':''}>日曜日</option></select></label></div><label class="check-row"><input name="showGraph" type="checkbox" ${state.settings.showGraph?'checked':''}> 統計グラフを表示</label><label class="check-row"><input name="sound" type="checkbox" ${state.settings.sound?'checked':''}> 完了音を使用</label><label class="check-row"><input name="vibration" type="checkbox" ${state.settings.vibration?'checked':''}> バイブレーションを使用</label><label class="check-row"><input name="confirmations" type="checkbox" ${state.settings.confirmations?'checked':''}> 重要操作の確認ダイアログを表示</label><button class="btn primary block" type="submit">保存</button></form>`);
+      openModal('表示・動作設定',`<form id="display-settings-form" class="form-grid"><label>アプリ名<input name="appName" maxlength="40" value="${esc(state.settings.appName)}" required></label><div class="form-columns"><label>配色<select name="theme"><option value="dark" ${state.settings.theme!=='light'?'selected':''}>ダークモード</option><option value="light" ${state.settings.theme==='light'?'selected':''}>ライトモード</option></select></label><label>ポイント小数桁数<input name="pointDecimals" type="number" min="0" max="6" step="1" value="${num(state.settings.pointDecimals)}"></label></div><div class="form-columns"><label>時間表示<select name="timeFormat"><option value="hms" ${state.settings.timeFormat!=='decimal'?'selected':''}>時間・分</option><option value="decimal" ${state.settings.timeFormat==='decimal'?'selected':''}>小数時間</option></select></label><label>週の開始曜日<select name="weekStartsOn"><option value="1" ${num(state.settings.weekStartsOn)===1?'selected':''}>月曜日</option><option value="0" ${num(state.settings.weekStartsOn)===0?'selected':''}>日曜日</option></select></label></div><label class="check-row"><input name="showGraph" type="checkbox" ${state.settings.showGraph?'checked':''}> 統計グラフを表示</label><label class="check-row"><input name="sound" type="checkbox" ${state.settings.sound?'checked':''}> 待機タイマーの完了音を使用</label><label class="check-row"><input name="vibration" type="checkbox" ${state.settings.vibration?'checked':''}> 待機タイマーのバイブレーションを使用</label><div class="callout">報酬タイマーの残り時間が0になると停止画面を表示します。「通知を停止」を押すまで、対応している動作を繰り返します。</div><label class="check-row"><input name="rewardTimerAlarm" type="checkbox" ${state.settings.rewardTimerAlarm!==false?'checked':''}> 報酬タイマー終了通知を使用</label><label class="check-row"><input name="rewardAlarmSound" type="checkbox" ${state.settings.rewardAlarmSound!==false?'checked':''}> 終了通知でアラーム音を鳴らす</label><label class="check-row"><input name="rewardAlarmVibration" type="checkbox" ${state.settings.rewardAlarmVibration!==false?'checked':''}> 対応端末では停止まで振動する</label><label class="check-row"><input name="confirmations" type="checkbox" ${state.settings.confirmations?'checked':''}> 重要操作の確認ダイアログを表示</label><button class="btn primary block" type="submit">保存</button></form>`);
     }
     function openPointAdjustment() {
       openModal('ポイント残高を調整',`<form id="point-adjustment-form" class="form-grid"><div class="callout">履歴に残る調整です。加算は正の数、減算は負の数で入力してください。</div><div class="form-columns"><label>調整ポイント<input name="amount" type="number" step="any" value="0" required></label><label>調整日時<input name="recordedAt" type="datetime-local" value="${localDateTimeValue()}" required></label></div><label>理由・メモ<textarea name="memo" required></textarea></label><button class="btn primary block" type="submit">調整を記録</button></form>`);
@@ -1268,7 +1334,7 @@
       const data=new FormData(form);const amount=num(data.get('amount'));if(!amount)return showToast('0以外の調整ポイントを入力してください。');state.pointAdjustments.push({id:uid('point-adjustment'),amount,recordedAt:new Date(data.get('recordedAt')).toISOString(),memo:String(data.get('memo')||''),createdAt:isoNow(),updatedAt:isoNow()});saveState();closeModal();render();showToast('ポイント調整を記録しました。');
     }
     function submitDisplaySettings(form) {
-      const data=new FormData(form);Object.assign(state.settings,{appName:String(data.get('appName')).trim()||'人生RPG',theme:String(data.get('theme')),pointDecimals:clamp(Math.floor(num(data.get('pointDecimals'),2)),0,6),timeFormat:String(data.get('timeFormat')),weekStartsOn:num(data.get('weekStartsOn'))===0?0:1,showGraph:data.has('showGraph'),sound:data.has('sound'),vibration:data.has('vibration'),confirmations:data.has('confirmations')});
+      const data=new FormData(form);Object.assign(state.settings,{appName:String(data.get('appName')).trim()||'人生RPG',theme:String(data.get('theme')),pointDecimals:clamp(Math.floor(num(data.get('pointDecimals'),2)),0,6),timeFormat:String(data.get('timeFormat')),weekStartsOn:num(data.get('weekStartsOn'))===0?0:1,showGraph:data.has('showGraph'),sound:data.has('sound'),vibration:data.has('vibration'),rewardTimerAlarm:data.has('rewardTimerAlarm'),rewardAlarmSound:data.has('rewardAlarmSound'),rewardAlarmVibration:data.has('rewardAlarmVibration'),confirmations:data.has('confirmations')});
       saveState();closeModal();render();showToast('表示・動作設定を保存しました。');
     }
     function exportedJson() {return JSON.stringify({...state,schemaVersion:SCHEMA_VERSION,exportedAt:isoNow()},null,2);}
@@ -1310,7 +1376,7 @@
     }
     function resetAllData() {
       if(!globalThis.confirm('人生RPGの設定・履歴・ポイント・タイマーをすべて初期化します。元に戻せません。実行しますか？'))return;
-      state=createDefaultState();saveState();closeModal();nav('home');showToast('全データを初期状態へ戻しました。');
+      stopRewardLimitAlarm(false);state=createDefaultState();saveState();closeModal();nav('home');showToast('全データを初期状態へ戻しました。');
     }
 
     function openManualTraining() {
@@ -1507,6 +1573,7 @@
         'manual-mode':()=>toggleManualMode(mode), 'add-theme':()=>openThemeForm(), 'edit-theme':()=>openThemeForm(id),
         'delete-theme':()=>deleteTheme(id), 'move-theme-up':()=>moveThemeUp(id),
         'start-reward':startReward,'pause-reward':pauseReward,'resume-reward':resumeReward,'finish-reward':openFinishReward,'cancel-reward':cancelReward,
+        'stop-reward-alarm':()=>stopRewardLimitAlarm(true),'stop-and-finish-reward':stopAndFinishReward,
         'use-fixed-reward':()=>useFixedReward(id,button),'use-calorie-reward':()=>useCalorieReward(id,button,'item'),'cash-calorie-reward':()=>useCalorieReward(id,button,'cash'),'open-calorie-input':openCalorieInput,'open-cash-usage':openCashUsage,
         'add-reward':()=>openRewardForm(),'edit-reward':()=>openRewardForm(id),'delete-reward':()=>deleteReward(id),
         'start-wait':startWait,'reset-wait':resetWait,'cancel-wait':cancelWait,'edit-wait-settings':openWaitSettings,'edit-level-settings':openLevelSettings,
@@ -1551,6 +1618,7 @@
       reset: () => { state = createDefaultState(); saveState(); render(); },
       calculateTrainingPoints, pointSummary, activeTrainingElapsedMs, trainingTotals, commitTrainingHistoryEntry,
       calculateRewardPointCost, activeRewardRawElapsedMs, activeRewardElapsedMs, rewardAffordableMs, commitRewardHistoryEntry,
+      shouldRewardLimitAlarm,
       calorieSummary, cashRewardSummary, commitCashUsageEntry,
       rangeForPeriod, streakSummary, peakCalorieBalance, achievementConditions, waitTimerRemainingMs,
       getLevel,
