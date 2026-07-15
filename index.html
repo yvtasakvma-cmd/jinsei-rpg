@@ -1,0 +1,1568 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="日々の修業と報酬をゲーム感覚で記録するライフログ">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="人生RPG">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <title>人生RPG</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090d18;
+      --surface: #11182a;
+      --surface-2: #172137;
+      --line: #26334e;
+      --text: #f3f6ff;
+      --muted: #9eabc4;
+      --primary: #68e1b5;
+      --primary-2: #35b88c;
+      --gold: #f2c96d;
+      --danger: #ff7d8d;
+      --info: #77a9ff;
+      --radius: 18px;
+      --shadow: 0 14px 40px rgba(0, 0, 0, .28);
+    }
+    :root[data-theme="light"] {
+      color-scheme: light; --bg:#eef2f8; --surface:#ffffff; --surface-2:#e8eef7; --line:#cbd5e5; --text:#152033; --muted:#64728a;
+      --primary:#168b67; --primary-2:#0d7958; --gold:#a86b00; --danger:#c94356; --info:#2f6fd6; --shadow:0 12px 34px rgba(37,55,84,.13);
+    }
+    :root[data-theme="light"] body { background:radial-gradient(circle at 85% -10%,rgba(22,139,103,.09),transparent 36%),var(--bg); }
+    :root[data-theme="light"] .topbar { background:rgba(238,242,248,.9); }
+    :root[data-theme="light"] .bottom-nav { background:rgba(248,250,253,.96); }
+    :root[data-theme="light"] .card { background:linear-gradient(160deg,#fff,#f5f8fc); }
+    :root[data-theme="light"] input, :root[data-theme="light"] select, :root[data-theme="light"] textarea, :root[data-theme="light"] .segmented { background:#fff; }
+    :root[data-theme="light"] .modal { background:#f7f9fc; }
+    :root[data-theme="light"] .modal-head { background:rgba(247,249,252,.96); }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100dvh;
+      background:
+        radial-gradient(circle at 85% -10%, rgba(104, 225, 181, .12), transparent 36%),
+        radial-gradient(circle at -20% 25%, rgba(119, 169, 255, .10), transparent 34%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { touch-action: manipulation; }
+    .app-shell { width: min(100%, 760px); margin: 0 auto; min-height: 100dvh; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: calc(14px + env(safe-area-inset-top)) 18px 12px;
+      background: rgba(9, 13, 24, .88);
+      border-bottom: 1px solid rgba(38, 51, 78, .7);
+      backdrop-filter: blur(16px);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, var(--primary), #6db9ff);
+      color: #07120f;
+      font-size: 20px;
+      box-shadow: 0 7px 24px rgba(104, 225, 181, .2);
+    }
+    .brand h1 { margin: 0; font-size: 17px; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+    .top-balance { text-align: right; }
+    .top-balance strong { display: block; color: var(--gold); font-size: 17px; font-variant-numeric: tabular-nums; }
+    .top-balance span { color: var(--muted); font-size: 10px; }
+    main { padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); }
+    .screen { display: none; animation: screen-in .18s ease; }
+    .screen.active { display: block; }
+    @keyframes screen-in { from { opacity: .45; transform: translateY(4px); } }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 4px 2px 12px; }
+    .section-head h2, .section-head h3 { margin: 0; }
+    .section-head h2 { font-size: 22px; }
+    .section-head h3 { font-size: 16px; }
+    .eyebrow { margin: 0 0 3px; color: var(--primary); font-weight: 700; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+    .tiny { font-size: 10px; }
+    .stack { display: grid; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(160deg, rgba(23, 33, 55, .96), rgba(15, 22, 38, .96));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-body { padding: 16px; }
+    .hero { position: relative; padding: 20px; }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      right: -70px;
+      top: -80px;
+      border-radius: 50%;
+      border: 28px solid rgba(104, 225, 181, .06);
+    }
+    .level-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; position: relative; z-index: 1; }
+    .level-badge { display: flex; align-items: baseline; gap: 6px; }
+    .level-badge span { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .level-badge strong { font-size: 42px; line-height: 1; color: var(--primary); }
+    .point-balance { text-align: right; }
+    .point-balance strong { display: block; font-size: 28px; color: var(--gold); font-variant-numeric: tabular-nums; }
+    .point-balance span { color: var(--muted); font-size: 11px; }
+    .progress { height: 9px; margin-top: 15px; background: #080d17; border: 1px solid #283651; border-radius: 999px; overflow: hidden; }
+    .progress > i { display: block; height: 100%; background: linear-gradient(90deg, var(--primary-2), var(--primary)); border-radius: inherit; }
+    .stat { min-height: 92px; padding: 14px; }
+    .stat .label { color: var(--muted); font-size: 11px; }
+    .stat strong { display: block; margin-top: 7px; font-size: 20px; font-variant-numeric: tabular-nums; }
+    .stat .sub { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .timer-card { border-color: rgba(104, 225, 181, .44); }
+    .timer-card.is-paused { border-color: rgba(242, 201, 109, .5); }
+    .timer-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .theme-chip { display: inline-flex; align-items: center; gap: 7px; min-width: 0; font-weight: 700; }
+    .theme-dot { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; background: var(--chip, var(--primary)); box-shadow: 0 0 14px var(--chip, var(--primary)); }
+    .timer-display { margin: 18px 0 4px; text-align: center; font-size: clamp(42px, 13vw, 62px); line-height: 1; letter-spacing: .04em; font-variant-numeric: tabular-nums; font-weight: 800; }
+    .timer-sub { text-align: center; color: var(--muted); font-size: 12px; }
+    .timer-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    .timer-meta div { padding: 10px; border-radius: 12px; background: rgba(7, 12, 22, .55); }
+    .timer-meta span { display: block; color: var(--muted); font-size: 10px; }
+    .timer-meta strong { display: block; margin-top: 4px; font-size: 13px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+    .btn {
+      min-height: 46px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .btn:focus-visible, .nav-btn:focus-visible, .icon-btn:focus-visible { outline: 3px solid rgba(119, 169, 255, .55); outline-offset: 2px; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn.primary { border-color: transparent; background: linear-gradient(145deg, var(--primary), #70d4ff); color: #06120f; }
+    .btn.gold { border-color: transparent; background: linear-gradient(145deg, var(--gold), #ffad69); color: #211505; }
+    .btn.danger { border-color: rgba(255, 125, 141, .38); background: rgba(255, 125, 141, .10); color: #ffacb7; }
+    .btn.ghost { background: transparent; }
+    .btn.small-btn { min-height: 38px; padding: 0 12px; font-size: 12px; }
+    .btn.block { width: 100%; }
+    .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    .quick-btn { min-height: 74px; text-align: left; }
+    .quick-btn b { display: block; margin-bottom: 5px; font-size: 19px; }
+    .list { display: grid; gap: 9px; }
+    .list-item { display: flex; align-items: center; gap: 11px; padding: 13px; border: 1px solid var(--line); border-radius: 15px; background: rgba(17, 24, 42, .78); }
+    .list-icon { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; border-radius: 13px; background: color-mix(in srgb, var(--item-color, var(--primary)) 18%, transparent); font-size: 20px; }
+    .list-main { min-width: 0; flex: 1; }
+    .list-main strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .list-main span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .list-value { text-align: right; flex: 0 0 auto; }
+    .list-value strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+    .icon-btn { width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); color: var(--text); cursor: pointer; }
+    .reward-actions { margin-top: 0; justify-content: flex-end; flex: 0 0 auto; }
+    .empty { padding: 24px 16px; border: 1px dashed var(--line); border-radius: 15px; text-align: center; color: var(--muted); }
+    .callout { padding: 13px 14px; border: 1px solid rgba(119, 169, 255, .34); border-radius: 14px; background: rgba(119, 169, 255, .08); color: #c9dcff; font-size: 12px; line-height: 1.65; }
+    .coming { padding: 32px 20px; text-align: center; color: var(--muted); }
+    .coming b { display: block; margin-bottom: 8px; color: var(--text); font-size: 18px; }
+    .bottom-nav {
+      position: fixed;
+      z-index: 40;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      width: min(100%, 760px);
+      padding: 7px 5px calc(7px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--line);
+      background: rgba(10, 15, 27, .96);
+      backdrop-filter: blur(18px);
+    }
+    .nav-btn { min-height: 54px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); cursor: pointer; font-size: 10px; font-weight: 700; }
+    .nav-btn b { display: block; margin-bottom: 3px; font-size: 19px; line-height: 1; }
+    .nav-btn.active { background: rgba(104, 225, 181, .10); color: var(--primary); }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 100; display: none; align-items: flex-end; justify-content: center; padding-top: 20px; background: rgba(2, 5, 12, .72); backdrop-filter: blur(5px); }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(100%, 760px); max-height: 92dvh; overflow: auto; border: 1px solid var(--line); border-bottom: 0; border-radius: 24px 24px 0 0; background: #101729; box-shadow: 0 -25px 70px rgba(0,0,0,.5); }
+    .modal-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); background: rgba(16, 23, 41, .96); }
+    .modal-head h3 { margin: 0; font-size: 18px; }
+    .modal-body { padding: 18px 18px calc(22px + env(safe-area-inset-bottom)); }
+    .form-grid { display: grid; gap: 13px; }
+    label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    input, select, textarea { width: 100%; min-height: 48px; border: 1px solid var(--line); border-radius: 12px; background: #0a1020; color: var(--text); padding: 11px 12px; outline: none; }
+    input[type="color"] { padding: 5px; }
+    input[type="checkbox"] { width: 22px; min-height: 22px; accent-color: var(--primary); }
+    input:focus, select:focus, textarea:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(119,169,255,.12); }
+    textarea { min-height: 86px; resize: vertical; }
+    .check-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+    .form-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border: 1px solid var(--line); border-radius: 14px; background: #0a1020; }
+    .segmented button { min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-weight: 700; }
+    .segmented button.active { background: var(--surface-2); color: var(--text); }
+    .bar-chart { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); align-items: end; gap: 7px; min-height: 174px; padding-top: 16px; }
+    .bar-column { display: grid; grid-template-rows: 118px auto; gap: 7px; text-align: center; }
+    .bar-track { display: flex; align-items: end; justify-content: center; height: 118px; border-bottom: 1px solid var(--line); }
+    .bar { width: min(70%,28px); min-height: 3px; border-radius: 7px 7px 3px 3px; background: linear-gradient(180deg,var(--primary),var(--info)); box-shadow: 0 0 18px rgba(104,225,181,.15); }
+    .bar-label { color: var(--muted); font-size: 10px; }
+    .table-list { display: grid; gap: 8px; }
+    .table-row { display: grid; grid-template-columns: minmax(0,1.4fr) repeat(2,minmax(62px,.7fr)); gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(38,51,78,.65); font-size: 12px; }
+    .table-row:last-child { border-bottom: 0; }
+    .table-row > :not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+    .toast { position: fixed; z-index: 200; left: 50%; bottom: calc(82px + env(safe-area-inset-bottom)); transform: translate(-50%, 18px); width: min(calc(100% - 32px), 520px); padding: 13px 15px; border: 1px solid var(--line); border-radius: 13px; background: #19233a; color: var(--text); opacity: 0; pointer-events: none; transition: .2s ease; box-shadow: var(--shadow); font-size: 13px; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .pwa-update { position: fixed; z-index: 80; left: 50%; bottom: calc(82px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; justify-content: space-between; gap: 12px; width: min(calc(100% - 24px), 620px); padding: 12px 13px 12px 15px; border: 1px solid rgba(104,225,181,.5); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
+    .pwa-update[hidden] { display: none; }
+    .pwa-update span { min-width: 0; font-size: 12px; line-height: 1.5; }
+    @media (min-width: 640px) {
+      main { padding-left: 24px; padding-right: 24px; }
+      .modal-backdrop { align-items: center; padding: 24px; }
+      .modal { max-width: 620px; border-bottom: 1px solid var(--line); border-radius: 24px; }
+    }
+    @media (max-width: 370px) {
+      .grid-2, .form-columns { grid-template-columns: 1fr; }
+      .nav-btn { font-size: 9px; }
+      .nav-btn b { font-size: 17px; }
+    }
+    @media (max-width: 560px) {
+      .reward-choice-item { flex-wrap: wrap; align-items: flex-start; }
+      .reward-choice-item .reward-actions { width: 100%; padding-left: 53px; }
+      .reward-choice-item .reward-actions .btn { flex: 1 1 100px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">◆</div>
+        <div><h1 id="app-title">人生RPG</h1><p>今日の経験を、明日の力に。</p></div>
+      </div>
+      <div class="top-balance"><strong id="top-points">0 pt</strong><span>報酬ポイント</span></div>
+    </header>
+
+    <main>
+      <section id="screen-home" class="screen active" aria-labelledby="home-title">
+        <div class="section-head"><div><p class="eyebrow">STATUS</p><h2 id="home-title">冒険者ステータス</h2></div></div>
+        <div id="home-content" class="stack"></div>
+      </section>
+
+      <section id="screen-training" class="screen" aria-labelledby="training-title">
+        <div class="section-head"><div><p class="eyebrow">TRAINING</p><h2 id="training-title">修業</h2></div><button class="btn small-btn primary" data-action="open-training-manual">手動記録</button></div>
+        <div id="training-content" class="stack"></div>
+      </section>
+
+      <section id="screen-rewards" class="screen" aria-labelledby="rewards-title">
+        <div class="section-head"><div><p class="eyebrow">REWARDS</p><h2 id="rewards-title">報酬</h2></div><button class="btn small-btn primary" data-action="add-reward">報酬を追加</button></div>
+        <div id="rewards-content" class="stack"></div>
+      </section>
+
+      <section id="screen-stats" class="screen" aria-labelledby="stats-title">
+        <div class="section-head"><div><p class="eyebrow">RECORDS</p><h2 id="stats-title">統計</h2></div></div>
+        <div id="stats-content" class="stack"></div>
+      </section>
+
+      <section id="screen-history" class="screen" aria-labelledby="history-title">
+        <div class="section-head"><div><p class="eyebrow">LOG</p><h2 id="history-title">履歴</h2></div></div>
+        <div id="history-content" class="stack"></div>
+      </section>
+
+      <section id="screen-settings" class="screen" aria-labelledby="settings-title">
+        <div class="section-head"><div><p class="eyebrow">SYSTEM</p><h2 id="settings-title">設定</h2></div><button class="btn small-btn primary" data-action="add-theme">修業を追加</button></div>
+        <div id="settings-content" class="stack"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="メインメニュー">
+      <button class="nav-btn active" data-screen="home"><b>⌂</b>ホーム</button>
+      <button class="nav-btn" data-screen="training"><b>⚔</b>修業</button>
+      <button class="nav-btn" data-screen="rewards"><b>♢</b>報酬</button>
+      <button class="nav-btn" data-screen="stats"><b>▥</b>統計</button>
+      <button class="nav-btn" data-screen="history"><b>☷</b>履歴</button>
+      <button class="nav-btn" data-screen="settings"><b>⚙</b>設定</button>
+    </nav>
+  </div>
+
+  <div id="modal-backdrop" class="modal-backdrop" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <header class="modal-head"><h3 id="modal-title">入力</h3><button class="icon-btn" type="button" data-action="close-modal" aria-label="閉じる">×</button></header>
+      <div id="modal-body" class="modal-body"></div>
+    </section>
+  </div>
+  <div id="pwa-update" class="pwa-update" role="status" hidden>
+    <span>新しいバージョンを利用できます。</span>
+    <button class="btn small-btn primary" type="button" data-action="apply-pwa-update">更新する</button>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const STORAGE_KEY = 'jinseiRpgState';
+    const SCHEMA_VERSION = 7;
+
+    const uid = (prefix = 'id') => {
+      const random = globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      return `${prefix}-${random}`;
+    };
+    const isoNow = () => new Date().toISOString();
+    const clamp = (number, min, max) => Math.min(max, Math.max(min, number));
+    const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+    const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+    const localDateTimeValue = (date = new Date()) => {
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    };
+    const formatDateTime = (value) => value ? new Intl.DateTimeFormat('ja-JP', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}).format(new Date(value)) : '—';
+    const formatDuration = (seconds, withSeconds = true) => {
+      const total = Math.max(0, Math.floor(num(seconds)));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      if (h) return withSeconds ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${h}時間${m}分`;
+      return withSeconds ? `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}分`;
+    };
+    const formatLongDuration = seconds => {
+      const total = Math.max(0, Math.floor(num(seconds)));
+      if (typeof state !== 'undefined' && state?.settings?.timeFormat === 'decimal') return `${(total/3600).toLocaleString('ja-JP',{minimumFractionDigits:0,maximumFractionDigits:2})}時間`;
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      if (h) return `${h}時間${m ? `${m}分` : ''}${s ? `${s}秒` : ''}`;
+      return `${m ? `${m}分` : ''}${s ? `${s}秒` : m ? '' : '0分'}`;
+    };
+
+    function defaultThemes() {
+      return [
+        ['ドラム','🥁','#f28b66',450,false],
+        ['ギター','🎸','#d79cff',450,false],
+        ['音楽理論','🎼','#7cb7ff',600,false],
+        ['金融','📈','#62d69a',600,false],
+        ['読書','📚','#f2c96d',900,false],
+        ['エアロバイク','🚴','#61d5db',300,true],
+        ['ゲーム制作','🎮','#9aa7ff',600,false],
+        ['プログラミング','💻','#72a5ff',600,false],
+        ['その他','✦','#9eabc4',600,false]
+      ].map((item, order) => ({
+        id: `theme-default-${order + 1}`,
+        name: item[0], description: '', icon: item[1], color: item[2], order,
+        enabled: true, isExercise: item[4], earnsPoints: true, pointMode: 'rate',
+        secondsPerPoint: item[3], multiplier: 1, fixedBonus: 0, memo: '', createdAt: isoNow(), updatedAt: isoNow()
+      }));
+    }
+
+    function defaultRewards() {
+      const rewards = [
+        ['ゲーム','🎮','#9aa7ff','point_time',1,0],
+        ['動画','▶','#77a9ff','point_time',1,0],
+        ['自由時間','☕','#68e1b5','point_time',1,0],
+        ['好きな食事','🍽','#f2c96d','point_fixed',0,50],
+        ['買い物','🛍','#d79cff','point_fixed',0,100],
+        ['映画1本','🎬','#f28b66','point_fixed',0,30]
+      ].map((item, order) => ({
+        id:`reward-default-${order+1}`, name:item[0], icon:item[1], color:item[2], type:item[3], order,
+        enabled:true, pointCostPerMinute:item[4], fixedPointCost:item[5], requiredCalories:0,
+        consumeCalories:true, calorieCost:0, usageLimit:null, description:'', memo:'', createdAt:isoNow(), updatedAt:isoNow()
+      }));
+      rewards.push({
+        id:'reward-default-7',name:'ビール500ml',icon:'🍺',color:'#f0b755',type:'calorie',order:6,enabled:true,
+        pointCostPerMinute:0,fixedPointCost:0,requiredCalories:500,consumeCalories:true,calorieCost:500,usageLimit:null,
+        cashAlternativeEnabled:true,cashAlternativeAmount:300,
+        description:'アクティブカロリー500kcalで交換',memo:'',createdAt:isoNow(),updatedAt:isoNow()
+      });
+      return rewards;
+    }
+
+    function createDefaultState() {
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        settings: {
+          appName: '人生RPG', theme: 'dark', pointDecimals: 2, timeFormat: 'hms', weekStartsOn: 1,
+          showGraph: true, sound: false, vibration: false, confirmations: true, levelMode:'points',
+          waitTimerDefinition: {name:'72時間タイマー', durationHours:72, completeLabel:'設定時間経過・解禁', color:'#68e1b5', icon:'⏳'},
+          levels: [
+            {level:1, name:'旅立ち', requiredPoints:0}, {level:2, name:'見習い', requiredPoints:100},
+            {level:3, name:'探求者', requiredPoints:250}, {level:4, name:'熟練者', requiredPoints:500},
+            {level:5, name:'達人', requiredPoints:1000}
+          ]
+        },
+        trainingThemes: defaultThemes(), rewards: defaultRewards(), trainingHistory: [], rewardHistory: [], cashUsageHistory: [], calorieHistory: [], waitHistory: [], pointAdjustments: [],
+        activeTrainingTimer: null, activeRewardTimer: null, activeWaitTimer: null, achievements: []
+      };
+    }
+
+    function normalizeState(raw) {
+      const base = createDefaultState();
+      if (!raw || typeof raw !== 'object') return base;
+      let rewards = Array.isArray(raw.rewards) && (raw.rewards.length || num(raw.schemaVersion) >= 2) ? raw.rewards : base.rewards;
+      if (num(raw.schemaVersion) < 3 && !rewards.some(reward => reward.type === 'calorie')) {
+        rewards = [...rewards, base.rewards.find(reward => reward.type === 'calorie')];
+      }
+      if (num(raw.schemaVersion) < 6) {
+        rewards = rewards.map(reward => {
+          const isDefaultBeer = reward.id === 'reward-default-7' || reward.name === 'ビール500ml';
+          return reward.type === 'calorie' ? {...reward,cashAlternativeEnabled:isDefaultBeer,cashAlternativeAmount:isDefaultBeer?300:0} : reward;
+        });
+      }
+      rewards = rewards.map(reward => reward.type === 'calorie' ? {...reward,cashAlternativeEnabled:Boolean(reward.cashAlternativeEnabled),cashAlternativeAmount:Math.max(0,num(reward.cashAlternativeAmount))} : reward);
+      return {
+        ...base, ...raw,
+        settings: {...base.settings, ...(raw.settings || {})},
+        trainingThemes: Array.isArray(raw.trainingThemes) ? raw.trainingThemes : base.trainingThemes,
+        rewards,
+        trainingHistory: Array.isArray(raw.trainingHistory) ? raw.trainingHistory : [],
+        rewardHistory: Array.isArray(raw.rewardHistory) ? raw.rewardHistory : [],
+        cashUsageHistory: Array.isArray(raw.cashUsageHistory) ? raw.cashUsageHistory : [],
+        calorieHistory: Array.isArray(raw.calorieHistory) ? raw.calorieHistory : [],
+        waitHistory: Array.isArray(raw.waitHistory) ? raw.waitHistory : [],
+        pointAdjustments: Array.isArray(raw.pointAdjustments) ? raw.pointAdjustments : [],
+        achievements: Array.isArray(raw.achievements) ? raw.achievements : []
+      };
+    }
+
+    function loadState() {
+      try { return normalizeState(JSON.parse(localStorage.getItem(STORAGE_KEY))); }
+      catch (error) { console.warn('保存データを読み込めませんでした。', error); return createDefaultState(); }
+    }
+
+    let state = loadState();
+    let currentScreen = 'home';
+    let statsPeriod = 'week';
+    let toastTimer = 0;
+    let finishing = false;
+
+    function saveState() {
+      state.schemaVersion = SCHEMA_VERSION;
+      recalculateHistoryBalances();
+      syncAchievements();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function recalculateHistoryBalances() {
+      const events=[];
+      state.trainingHistory.forEach(entry=>events.push({time:new Date(entry.endAt).getTime(),points:num(entry.earnedPoints),calories:Math.max(0,num(entry.activeCalories))}));
+      state.pointAdjustments.forEach(entry=>events.push({time:new Date(entry.recordedAt||entry.createdAt).getTime(),points:num(entry.amount),calories:0}));
+      state.calorieHistory.forEach(entry=>events.push({time:new Date(entry.recordedAt).getTime(),points:0,calories:num(entry.amount)}));
+      state.rewardHistory.forEach(entry=>events.push({time:new Date(entry.endAt||entry.createdAt).getTime(),points:-Math.max(0,num(entry.usedPoints)),calories:-Math.max(0,num(entry.usedCalories)),cash:Math.max(0,num(entry.cashAmount)),reward:entry}));
+      state.cashUsageHistory.forEach(entry=>events.push({time:new Date(entry.usedAt||entry.createdAt).getTime(),points:0,calories:0,cash:-Math.max(0,num(entry.amount)),cashUsage:entry}));
+      events.sort((a,b)=>a.time-b.time);let points=0,calories=0,cash=0;for(const event of events){points+=event.points;calories+=event.calories;cash+=num(event.cash);if(event.reward){event.reward.balanceAfter=points;event.reward.calorieBalanceAfter=calories;event.reward.cashBalanceAfter=cash;}if(event.cashUsage)event.cashUsage.cashBalanceAfter=cash;}
+    }
+
+    function pointSummary(source = state) {
+      const earned = source.trainingHistory.reduce((sum, entry) => sum + num(entry.earnedPoints), 0);
+      const spent = source.rewardHistory.reduce((sum, entry) => sum + num(entry.usedPoints), 0);
+      const adjusted = source.pointAdjustments.reduce((sum, entry) => sum + num(entry.amount), 0);
+      return {earned, spent, adjusted, balance: earned - spent + adjusted};
+    }
+
+    function calorieSummary(source = state) {
+      const fromTraining = source.trainingHistory.reduce((sum, entry) => sum + Math.max(0, num(entry.activeCalories)), 0);
+      const manual = source.calorieHistory.reduce((sum, entry) => sum + num(entry.amount), 0);
+      const spent = source.rewardHistory.reduce((sum, entry) => sum + Math.max(0, num(entry.usedCalories)), 0);
+      return {fromTraining, manual, earned:fromTraining + Math.max(0, source.calorieHistory.reduce((sum, entry)=>sum+Math.max(0,num(entry.amount)),0)), spent, balance:fromTraining + manual - spent};
+    }
+
+    function cashRewardSummary(source = state) {
+      const earned = source.rewardHistory.reduce((sum, entry) => sum + Math.max(0, num(entry.cashAmount)), 0);
+      const used = (source.cashUsageHistory || []).reduce((sum, entry) => sum + Math.max(0, num(entry.amount)), 0);
+      const count = source.rewardHistory.filter(entry => num(entry.cashAmount) > 0).length;
+      return {earned, used, spent:used, balance:earned-used, total:earned, count, usageCount:(source.cashUsageHistory || []).length};
+    }
+
+    function calculateTrainingPoints(durationSeconds, snapshot) {
+      if (!snapshot.earnsPoints) return 0;
+      const secondsPerPoint = Math.max(1, num(snapshot.secondsPerPoint, 600));
+      return num(durationSeconds) / secondsPerPoint * num(snapshot.multiplier, 1) + num(snapshot.fixedBonus);
+    }
+
+    function trainingSnapshot(theme) {
+      return {
+        themeId: theme.id, themeName: theme.name, themeIcon: theme.icon, themeColor: theme.color,
+        earnsPoints: theme.earnsPoints !== false, secondsPerPoint: num(theme.secondsPerPoint, 600),
+        multiplier: num(theme.multiplier, 1), fixedBonus: num(theme.fixedBonus), isExercise: Boolean(theme.isExercise)
+      };
+    }
+
+    function commitTrainingHistoryEntry(entry) {
+      if (entry.sourceSessionId && state.trainingHistory.some(item => item.sourceSessionId === entry.sourceSessionId)) return false;
+      state.trainingHistory.push(entry);
+      return true;
+    }
+
+    function commitCashUsageEntry(entry) {
+      const amount = Math.max(0, Math.floor(num(entry.amount)));
+      if (!(amount > 0)) return false;
+      if (entry.sourceSessionId && state.cashUsageHistory.some(item => item.sourceSessionId === entry.sourceSessionId)) return false;
+      if (amount > cashRewardSummary().balance + 1e-9) return false;
+      state.cashUsageHistory.push({...entry, amount});
+      return true;
+    }
+
+    function rewardSnapshot(reward) {
+      return {
+        rewardId:reward.id, rewardName:reward.name, rewardIcon:reward.icon, rewardColor:reward.color,
+        type:reward.type, pointCostPerMinute:Math.max(0, num(reward.pointCostPerMinute)), fixedPointCost:Math.max(0, num(reward.fixedPointCost))
+      };
+    }
+
+    function commitRewardHistoryEntry(entry) {
+      if (entry.sourceSessionId && state.rewardHistory.some(item => item.sourceSessionId === entry.sourceSessionId)) return false;
+      state.rewardHistory.push(entry);
+      return true;
+    }
+
+    function calculateRewardPointCost(durationSeconds, snapshot) {
+      return Math.max(0, num(durationSeconds)) / 60 * Math.max(0, num(snapshot.pointCostPerMinute));
+    }
+
+    function activeTrainingElapsedMs(timer = state.activeTrainingTimer, at = Date.now()) {
+      if (!timer) return 0;
+      const accumulated = num(timer.accumulatedMs);
+      return timer.status === 'running' ? accumulated + Math.max(0, at - new Date(timer.lastStartedAt).getTime()) : accumulated;
+    }
+
+    function activeRewardRawElapsedMs(timer = state.activeRewardTimer, at = Date.now()) {
+      if (!timer) return 0;
+      const accumulated = num(timer.accumulatedMs);
+      return timer.status === 'running' ? accumulated + Math.max(0, at - new Date(timer.lastStartedAt).getTime()) : accumulated;
+    }
+
+    function rewardAffordableMs(timer = state.activeRewardTimer, source = state) {
+      if (!timer || !(timer.snapshot.pointCostPerMinute > 0)) return Infinity;
+      return Math.max(0, pointSummary(source).balance) / timer.snapshot.pointCostPerMinute * 60000;
+    }
+
+    function activeRewardElapsedMs(timer = state.activeRewardTimer, at = Date.now(), source = state) {
+      return Math.min(activeRewardRawElapsedMs(timer, at), rewardAffordableMs(timer, source));
+    }
+
+    function waitTimerRemainingMs(timer=state.activeWaitTimer,at=Date.now()) {
+      if(!timer)return 0;return Math.max(0,new Date(timer.endsAt).getTime()-at);
+    }
+
+    function waitDurationLabel(ms) {
+      const total=Math.max(0,Math.ceil(num(ms)/1000));const days=Math.floor(total/86400);const hours=Math.floor((total%86400)/3600);const minutes=Math.floor((total%3600)/60);const seconds=total%60;
+      return days?`${days}日 ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`:`${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+    }
+
+    function todayRange(date = new Date()) {
+      const start = new Date(date); start.setHours(0,0,0,0);
+      const end = new Date(start); end.setDate(end.getDate() + 1);
+      return [start.getTime(), end.getTime()];
+    }
+    function weekRange(date = new Date()) {
+      const start = new Date(date); start.setHours(0,0,0,0);
+      const day = start.getDay(); const weekStart = typeof state !== 'undefined' ? num(state?.settings?.weekStartsOn,1) : 1; const diff = (day - weekStart + 7) % 7;
+      start.setDate(start.getDate() - diff);
+      const end = new Date(start); end.setDate(end.getDate() + 7);
+      return [start.getTime(), end.getTime()];
+    }
+    function monthRange(date = new Date()) {
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+      return [start.getTime(), end.getTime()];
+    }
+    function rangeForPeriod(period, date=new Date()) {
+      const today=todayRange(date);const day=86400000;
+      if(period==='today')return today;
+      if(period==='yesterday')return [today[0]-day,today[0]];
+      if(period==='last7')return [today[0]-6*day,today[1]];
+      if(period==='week')return weekRange(date);
+      if(period==='lastWeek'){const current=weekRange(date);return [current[0]-7*day,current[0]];}
+      if(period==='month')return monthRange(date);
+      if(period==='lastMonth'){const previous=new Date(date.getFullYear(),date.getMonth()-1,1);return monthRange(previous);}
+      if(period==='year')return [new Date(date.getFullYear(),0,1).getTime(),new Date(date.getFullYear()+1,0,1).getTime()];
+      return [-Infinity,Infinity];
+    }
+    function entriesInRange(entries, range) {
+      return entries.filter(entry => { const time = new Date(entry.endAt || entry.recordedAt || entry.createdAt).getTime(); return time >= range[0] && time < range[1]; });
+    }
+    function trainingTotals(entries) {
+      return entries.reduce((acc, entry) => { acc.seconds += num(entry.durationSeconds); acc.points += num(entry.earnedPoints); acc.calories += num(entry.activeCalories); acc.count++; return acc; }, {seconds:0, points:0, calories:0, count:0});
+    }
+    function trainingDayKeys(source=state) {
+      return [...new Set(source.trainingHistory.filter(entry=>num(entry.durationSeconds)>0).map(entry=>{
+        const date=new Date(entry.endAt);return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+      }))].sort();
+    }
+    function streakSummary(source=state) {
+      const keys=trainingDayKeys(source);if(!keys.length)return {current:0,longest:0,days:0};
+      const day=86400000;let longest=1,run=1;
+      for(let i=1;i<keys.length;i++){const diff=(new Date(`${keys[i]}T00:00:00`)-new Date(`${keys[i-1]}T00:00:00`))/day;if(diff===1){run++;longest=Math.max(longest,run);}else run=1;}
+      const todayKey=localDateTimeValue(new Date()).slice(0,10);const yesterdayKey=localDateTimeValue(new Date(Date.now()-day)).slice(0,10);
+      let current=0;if(keys.at(-1)===todayKey||keys.at(-1)===yesterdayKey){current=1;for(let i=keys.length-1;i>0;i--){const diff=(new Date(`${keys[i]}T00:00:00`)-new Date(`${keys[i-1]}T00:00:00`))/day;if(diff!==1)break;current++;}}
+      return {current,longest,days:keys.length};
+    }
+    function peakCalorieBalance(source=state) {
+      const events=[];
+      source.trainingHistory.forEach(entry=>events.push({time:new Date(entry.endAt).getTime(),amount:Math.max(0,num(entry.activeCalories))}));
+      source.calorieHistory.forEach(entry=>events.push({time:new Date(entry.recordedAt).getTime(),amount:num(entry.amount)}));
+      source.rewardHistory.forEach(entry=>events.push({time:new Date(entry.endAt||entry.createdAt).getTime(),amount:-Math.max(0,num(entry.usedCalories))}));
+      events.sort((a,b)=>a.time-b.time);let balance=0,peak=0;for(const event of events){balance+=event.amount;peak=Math.max(peak,balance);}return peak;
+    }
+    const ACHIEVEMENT_DEFS=[
+      {id:'first-training',name:'初修業',description:'初めて修業を記録'},
+      {id:'streak-4',name:'三日坊主突破',description:'4日連続で修業'},
+      {id:'streak-7',name:'一週間継続',description:'7日連続で修業'},
+      {id:'training-10h',name:'修業10時間',description:'通算10時間達成'},
+      {id:'training-100h',name:'修業100時間',description:'通算100時間達成'},
+      {id:'music-10h',name:'音楽家見習い',description:'音楽系修業10時間'},
+      {id:'finance-10h',name:'金融修業者',description:'金融系修業10時間'},
+      {id:'exercise-10',name:'運動習慣',description:'運動系修業10回'},
+      {id:'first-reward',name:'報酬獲得',description:'初めて報酬を使用'},
+      {id:'calorie-500',name:'500kcal達成',description:'初めて500kcal貯める'}
+    ];
+    function achievementConditions(source=state) {
+      const all=trainingTotals(source.trainingHistory);const streak=streakSummary(source);
+      const themeById=new Map(source.trainingThemes.map(theme=>[theme.id,theme]));
+      const musicSeconds=source.trainingHistory.filter(entry=>/ドラム|ギター|音楽理論|音楽/.test(entry.themeName)).reduce((sum,entry)=>sum+num(entry.durationSeconds),0);
+      const financeSeconds=source.trainingHistory.filter(entry=>/金融/.test(entry.themeName)).reduce((sum,entry)=>sum+num(entry.durationSeconds),0);
+      const exerciseCount=source.trainingHistory.filter(entry=>themeById.get(entry.themeId)?.isExercise||num(entry.activeCalories)>0).length;
+      return {'first-training':all.count>=1,'streak-4':streak.longest>=4,'streak-7':streak.longest>=7,'training-10h':all.seconds>=36000,'training-100h':all.seconds>=360000,'music-10h':musicSeconds>=36000,'finance-10h':financeSeconds>=36000,'exercise-10':exerciseCount>=10,'first-reward':source.rewardHistory.length>=1,'calorie-500':peakCalorieBalance(source)>=500};
+    }
+    function syncAchievements() {
+      const conditions=achievementConditions();const existing=new Map(state.achievements.map(item=>[item.id,item]));
+      state.achievements=ACHIEVEMENT_DEFS.filter(def=>conditions[def.id]).map(def=>existing.get(def.id)||{id:def.id,achievedAt:isoNow()});
+    }
+    function getLevel(earnedPoints) {
+      const levels = [...state.settings.levels].sort((a,b) => num(a.requiredPoints) - num(b.requiredPoints));
+      let current = levels[0];
+      for (const level of levels) if (earnedPoints >= num(level.requiredPoints)) current = level;
+      const index = levels.indexOf(current);
+      const next = levels[index + 1] || null;
+      const progress = next ? clamp((earnedPoints - num(current.requiredPoints)) / Math.max(1, num(next.requiredPoints) - num(current.requiredPoints)) * 100, 0, 100) : 100;
+      return {current, next, progress};
+    }
+    function formatPoints(value) { return num(value).toLocaleString('ja-JP', {minimumFractionDigits:0, maximumFractionDigits:clamp(num(state.settings.pointDecimals,2),0,6)}); }
+    function getTheme(id) { return state.trainingThemes.find(theme => theme.id === id); }
+    function getReward(id) { return state.rewards.find(reward => reward.id === id); }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+    function openModal(title, html) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').innerHTML = html;
+      document.getElementById('modal-backdrop').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.querySelector('#modal-body input, #modal-body select, #modal-body textarea, #modal-body button')?.focus(), 0);
+    }
+    function closeModal() {
+      document.getElementById('modal-backdrop').classList.remove('open');
+      document.body.style.overflow = '';
+      finishing = false;
+    }
+    function confirmAction(message) { return !state.settings.confirmations || globalThis.confirm(message); }
+
+    function nav(screen) {
+      currentScreen = screen;
+      document.querySelectorAll('.screen').forEach(el => el.classList.toggle('active', el.id === `screen-${screen}`));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen === screen));
+      window.scrollTo({top:0, behavior:'smooth'});
+      render();
+    }
+
+    function renderHeader() {
+      const points = pointSummary();
+      document.documentElement.dataset.theme = state.settings.theme === 'light' ? 'light' : 'dark';
+      document.getElementById('app-title').textContent = state.settings.appName;
+      document.getElementById('top-points').textContent = `${formatPoints(points.balance)} pt`;
+      document.title = state.settings.appName;
+    }
+
+    function renderActiveTrainingTimer(compact = false) {
+      const timer = state.activeTrainingTimer;
+      if (!timer) return compact ? '' : `
+        <div class="card"><div class="card-body">
+          <div class="section-head"><div><p class="eyebrow">TRAINING TIMER</p><h3>修業を始める</h3></div></div>
+          <label>修業テーマ<select id="training-theme-select">${state.trainingThemes.filter(t=>t.enabled).sort((a,b)=>a.order-b.order).map(t=>`<option value="${esc(t.id)}">${esc(t.icon)} ${esc(t.name)}（${formatDuration(t.secondsPerPoint,false)} / 1pt）</option>`).join('')}</select></label>
+          <button class="btn primary block" data-action="start-training" style="margin-top:12px">修業タイマー開始</button>
+        </div></div>`;
+      const elapsedSeconds = activeTrainingElapsedMs(timer) / 1000;
+      const points = calculateTrainingPoints(elapsedSeconds, timer.snapshot);
+      const baseProgress = elapsedSeconds % Math.max(1, timer.snapshot.secondsPerPoint);
+      const toNext = baseProgress === 0 && elapsedSeconds > 0 ? 0 : Math.max(0, timer.snapshot.secondsPerPoint - baseProgress);
+      return `<div class="card timer-card ${timer.status === 'paused' ? 'is-paused' : ''}"><div class="card-body">
+        <div class="timer-title"><div class="theme-chip" style="--chip:${esc(timer.snapshot.themeColor)}"><i class="theme-dot"></i>${esc(timer.snapshot.themeIcon)} ${esc(timer.snapshot.themeName)}</div><span class="small muted">${timer.status === 'paused' ? '一時停止中' : '修業中'}</span></div>
+        <div class="timer-display" data-live-training-time>${formatDuration(elapsedSeconds)}</div>
+        <div class="timer-sub">${formatDateTime(timer.startedAt)} 開始</div>
+        <div class="timer-meta">
+          <div><span>獲得予定</span><strong data-live-training-points>${formatPoints(points)} pt</strong></div>
+          <div><span>次の基準ポイントまで</span><strong data-live-training-next>${formatDuration(toNext)}</strong></div>
+          <div><span>換算率</span><strong>${formatLongDuration(timer.snapshot.secondsPerPoint)} / 1pt</strong></div>
+          <div><span>倍率・ボーナス</span><strong>×${timer.snapshot.multiplier} ＋${timer.snapshot.fixedBonus}</strong></div>
+        </div>
+        <div class="button-row">
+          ${timer.status === 'running' ? '<button class="btn" data-action="pause-training">一時停止</button>' : '<button class="btn primary" data-action="resume-training">再開</button>'}
+          <button class="btn gold" data-action="finish-training">終了・記録</button>
+          <button class="btn danger" data-action="cancel-training">キャンセル</button>
+        </div>
+      </div></div>`;
+    }
+
+    function renderActiveRewardTimer() {
+      const timer = state.activeRewardTimer;
+      if (!timer) return `
+        <div class="card"><div class="card-body">
+          <div class="section-head"><div><p class="eyebrow">REWARD TIMER</p><h3>時間報酬を使う</h3></div></div>
+          <label>報酬<select id="reward-timer-select">${state.rewards.filter(r=>r.enabled && r.type==='point_time').sort((a,b)=>a.order-b.order).map(r=>`<option value="${esc(r.id)}">${esc(r.icon)} ${esc(r.name)}（1分 ${formatPoints(r.pointCostPerMinute)}pt）</option>`).join('')}</select></label>
+          <button class="btn gold block" data-action="start-reward" style="margin-top:12px">報酬タイマー開始</button>
+        </div></div>`;
+      const elapsedSeconds = activeRewardElapsedMs(timer) / 1000;
+      const used = calculateRewardPointCost(elapsedSeconds, timer.snapshot);
+      const balance = pointSummary().balance;
+      const affordableSeconds = timer.snapshot.pointCostPerMinute > 0 ? Math.max(0,balance) / timer.snapshot.pointCostPerMinute * 60 : Infinity;
+      return `<div class="card timer-card ${timer.status !== 'running' ? 'is-paused' : ''}" style="border-color:rgba(242,201,109,.48)"><div class="card-body">
+        <div class="timer-title"><div class="theme-chip" style="--chip:${esc(timer.snapshot.rewardColor)}"><i class="theme-dot"></i>${esc(timer.snapshot.rewardIcon)} ${esc(timer.snapshot.rewardName)}</div><span class="small muted">${timer.status === 'running' ? '使用中' : timer.status === 'limit' ? '残高上限で停止' : '一時停止中'}</span></div>
+        <div class="timer-display" data-live-reward-time>${formatDuration(elapsedSeconds)}</div>
+        <div class="timer-sub">${formatDateTime(timer.startedAt)} 開始</div>
+        <div class="timer-meta">
+          <div><span>使用予定</span><strong data-live-reward-cost>${formatPoints(used)} pt</strong></div>
+          <div><span>使用後の予想残高</span><strong data-live-reward-after>${formatPoints(Math.max(0,balance-used))} pt</strong></div>
+          <div><span>現在ポイント</span><strong>${formatPoints(balance)} pt</strong></div>
+          <div><span>残り使用可能時間</span><strong data-live-reward-affordable>${Number.isFinite(affordableSeconds) ? formatDuration(affordableSeconds) : '無制限'}</strong></div>
+        </div>
+        <div class="button-row">
+          ${timer.status === 'running' ? '<button class="btn" data-action="pause-reward">一時停止</button>' : timer.status === 'paused' ? '<button class="btn gold" data-action="resume-reward">再開</button>' : ''}
+          <button class="btn gold" data-action="finish-reward">終了・精算</button>
+          <button class="btn danger" data-action="cancel-reward">キャンセル</button>
+        </div>
+      </div></div>`;
+    }
+
+    function renderWaitTimer() {
+      const timer=state.activeWaitTimer;
+      const definition=state.settings.waitTimerDefinition;
+      if(!timer)return `<div class="card"><div class="card-body"><div class="timer-title"><div><p class="eyebrow">WAIT TIMER</p><h3 style="margin:0">${esc(definition.icon)} ${esc(definition.name)}</h3></div><button class="btn small-btn primary" data-action="start-wait">今から開始</button></div><div class="small muted" style="margin-top:9px">待機時間 ${num(definition.durationHours)}時間</div></div></div>`;
+      const remaining=waitTimerRemainingMs(timer);const complete=remaining<=0;
+      return `<div class="card timer-card" style="border-color:${complete?'rgba(104,225,181,.62)':'rgba(119,169,255,.42)'}"><div class="card-body"><div class="timer-title"><div class="theme-chip" style="--chip:${esc(timer.color)}"><i class="theme-dot"></i>${esc(timer.icon)} ${esc(timer.name)}</div><span class="small muted">${complete?'完了':'待機中'}</span></div><div class="timer-display" style="font-size:${complete?'32px':'clamp(34px,10vw,52px)'}" data-live-wait>${complete?esc(timer.completeLabel):waitDurationLabel(remaining)}</div><div class="timer-sub">終了予定 ${formatDateTime(timer.endsAt)}</div><div class="button-row"><button class="btn" data-action="reset-wait">リセット</button><button class="btn danger" data-action="cancel-wait">記録取り消し</button></div></div></div>`;
+    }
+
+    function renderHome() {
+      const points = pointSummary();
+      const today = trainingTotals(entriesInRange(state.trainingHistory, todayRange()));
+      const week = trainingTotals(entriesInRange(state.trainingHistory, weekRange()));
+      const month = trainingTotals(entriesInRange(state.trainingHistory, monthRange()));
+      const all = trainingTotals(state.trainingHistory);
+      const levelMetric = state.settings.levelMode==='hours' ? all.seconds/3600 : points.earned;
+      const level = getLevel(levelMetric);
+      const levelUnit = state.settings.levelMode==='hours' ? '時間' : 'pt';
+      const calories = calorieSummary();
+      const cashRewards = cashRewardSummary();
+      const calorieReward = state.rewards.filter(r=>r.enabled&&r.type==='calorie').sort((a,b)=>a.order-b.order)[0];
+      const recent = [...state.trainingHistory].sort((a,b)=>new Date(b.endAt)-new Date(a.endAt)).slice(0,3);
+      document.getElementById('home-content').innerHTML = `
+        <div class="card hero">
+          <div class="level-row"><div class="level-badge"><span>LV.</span><strong>${level.current.level}</strong></div><div class="point-balance"><strong>${formatPoints(points.balance)} pt</strong><span>現在の報酬ポイント</span></div></div>
+          <div class="progress" aria-label="次のレベルへの進捗"><i style="width:${level.progress}%"></i></div>
+          <div class="small muted" style="margin-top:8px">${esc(level.current.name)}${level.next ? ` ・ 次のレベルまで ${formatPoints(level.next.requiredPoints - levelMetric)} ${levelUnit}` : ' ・ 最高レベル到達'}</div>
+        </div>
+        <div class="grid-2">
+          <div class="card stat"><span class="label">今日の修業</span><strong>${formatLongDuration(today.seconds)}</strong><span class="sub">${formatPoints(today.points)} pt 獲得</span></div>
+          <div class="card stat"><span class="label">今週の修業</span><strong>${formatLongDuration(week.seconds)}</strong><span class="sub">${week.count} セッション</span></div>
+          <div class="card stat"><span class="label">今月の修業</span><strong>${formatLongDuration(month.seconds)}</strong><span class="sub">${formatPoints(month.points)} pt 獲得</span></div>
+          <div class="card stat"><span class="label">通算修業</span><strong>${formatLongDuration(all.seconds)}</strong><span class="sub">通算 ${formatPoints(points.earned)} pt</span></div>
+        </div>
+        <div class="card"><div class="card-body">
+          <div class="timer-title"><div><p class="eyebrow">ACTIVE CALORIES</p><strong style="font-size:26px;color:var(--primary)">${Math.max(0,calories.balance).toLocaleString('ja-JP')} kcal</strong></div><button class="btn small-btn" data-action="open-calorie-input">入力</button></div>
+          ${calorieReward ? `<div class="small muted" style="margin-top:9px">${calories.balance>=calorieReward.requiredCalories ? `${esc(calorieReward.name)}を${Math.floor(calories.balance/calorieReward.requiredCalories)}回使用できます` : `${esc(calorieReward.name)}まで残り ${Math.max(0,calorieReward.requiredCalories-calories.balance).toLocaleString('ja-JP')} kcal`}</div>` : '<div class="small muted">有効なカロリー報酬はありません。</div>'}
+          <div class="small" style="margin-top:7px;color:var(--gold)">現金報酬残高：¥${Math.max(0,cashRewards.balance).toLocaleString('ja-JP')}（獲得 ¥${cashRewards.earned.toLocaleString('ja-JP')}）</div>
+        </div></div>
+        ${renderWaitTimer()}
+        ${state.activeTrainingTimer ? renderActiveTrainingTimer(true) : ''}
+        ${state.activeRewardTimer ? renderActiveRewardTimer() : ''}
+        <div class="quick-grid">
+          <button class="btn quick-btn primary" data-action="go-training"><b>⚔</b>修業を始める</button>
+          <button class="btn quick-btn" data-action="open-training-manual"><b>＋</b>手動で記録</button>
+          <button class="btn quick-btn gold" data-action="go-rewards"><b>♢</b>報酬を使う</button>
+          <button class="btn quick-btn" data-action="open-calorie-input"><b>＋</b>カロリー入力</button>
+        </div>
+        <div class="section-head"><h3>最近の修業</h3><button class="btn small-btn ghost" data-action="go-history">すべて見る</button></div>
+        ${recent.length ? `<div class="list">${recent.map(trainingHistoryItem).join('')}</div>` : '<div class="empty">最初の修業を記録すると、ここに冒険の記録が並びます。</div>'}
+      `;
+    }
+
+    function trainingHistoryItem(entry) {
+      return `<div class="list-item">
+        <div class="list-icon" style="--item-color:${esc(entry.themeColor || '#68e1b5')}">${esc(entry.themeIcon || '✦')}</div>
+        <div class="list-main"><strong>${esc(entry.themeName)}</strong><span>${formatDateTime(entry.endAt)} ・ ${formatLongDuration(entry.durationSeconds)}${entry.memo ? ` ・ ${esc(entry.memo)}` : ''}</span></div>
+        <div class="list-value"><strong>＋${formatPoints(entry.earnedPoints)}</strong><span class="tiny muted">pt</span></div>
+        <button class="icon-btn" data-action="edit-history" data-kind="training" data-id="${esc(entry.id)}" aria-label="修業履歴を編集">✎</button>
+      </div>`;
+    }
+
+    function renderTraining() {
+      const themes = state.trainingThemes.filter(t=>t.enabled).sort((a,b)=>a.order-b.order);
+      document.getElementById('training-content').innerHTML = `
+        ${renderActiveTrainingTimer()}
+        <div class="section-head"><h3>修業テーマ</h3><button class="btn small-btn ghost" data-action="add-theme">追加</button></div>
+        <div class="list">${themes.map(theme => `<div class="list-item">
+          <div class="list-icon" style="--item-color:${esc(theme.color)}">${esc(theme.icon)}</div>
+          <div class="list-main"><strong>${esc(theme.name)}</strong><span>${theme.earnsPoints ? `${formatLongDuration(theme.secondsPerPoint)}で1pt ・ ×${theme.multiplier}${theme.fixedBonus ? ` ＋${theme.fixedBonus}` : ''}` : 'ポイントなし'}${theme.isExercise ? ' ・ 運動' : ''}</span></div>
+          <button class="icon-btn" data-action="edit-theme" data-id="${esc(theme.id)}" aria-label="${esc(theme.name)}を編集">✎</button>
+        </div>`).join('')}</div>`;
+    }
+
+    function rewardHistoryItem(entry) {
+      const isCash = entry.rewardOutcome === 'cash' || num(entry.cashAmount) > 0;
+      return `<div class="list-item">
+        <div class="list-icon" style="--item-color:${esc(entry.rewardColor || '#f2c96d')}">${esc(entry.rewardIcon || '♢')}</div>
+        <div class="list-main"><strong>${esc(entry.rewardName)}${isCash?'（現金化）':''}</strong><span>${formatDateTime(entry.endAt || entry.createdAt)}${entry.durationSeconds ? ` ・ ${formatLongDuration(entry.durationSeconds)}` : ''}${entry.usedCalories ? ` ・ ${num(entry.usedCalories).toLocaleString('ja-JP')}kcal消費` : ''}${entry.memo ? ` ・ ${esc(entry.memo)}` : ''}</span></div>
+        <div class="list-value"><strong>${isCash?`＋¥${num(entry.cashAmount).toLocaleString('ja-JP')}`:`−${entry.usedCalories ? `${num(entry.usedCalories).toLocaleString('ja-JP')}` : formatPoints(entry.usedPoints)}`}</strong><span class="tiny muted">${isCash?'現金化':entry.usedCalories?'kcal':'pt'}</span></div>
+        <button class="icon-btn" data-action="edit-history" data-kind="reward" data-id="${esc(entry.id)}" aria-label="報酬履歴を編集">✎</button>
+      </div>`;
+    }
+
+    function calorieHistoryItem(entry) {
+      return `<div class="list-item"><div class="list-icon" style="--item-color:#61d5db">🔥</div><div class="list-main"><strong>${esc(entry.exerciseType||'アクティブカロリー')}</strong><span>${formatDateTime(entry.recordedAt)}${entry.durationMinutes?` ・ ${entry.durationMinutes}分`:''}${entry.memo?` ・ ${esc(entry.memo)}`:''}</span></div><div class="list-value"><strong style="color:var(--primary)">＋${num(entry.amount).toLocaleString('ja-JP')}</strong><span class="tiny muted">kcal</span></div><button class="icon-btn" data-action="edit-history" data-kind="calorie" data-id="${esc(entry.id)}" aria-label="カロリー履歴を編集">✎</button></div>`;
+    }
+
+    function cashUsageHistoryItem(entry) {
+      return `<div class="list-item"><div class="list-icon" style="--item-color:#f2c96d">¥</div><div class="list-main"><strong>現金報酬を使用</strong><span>${formatDateTime(entry.usedAt||entry.createdAt)}${entry.memo?` ・ ${esc(entry.memo)}`:''}</span></div><div class="list-value"><strong style="color:var(--danger)">−¥${Math.max(0,num(entry.amount)).toLocaleString('ja-JP')}</strong><span class="tiny muted">残高使用</span></div><button class="icon-btn" data-action="edit-history" data-kind="cash" data-id="${esc(entry.id)}" aria-label="現金報酬の使用履歴を編集">✎</button></div>`;
+    }
+
+    function waitHistoryItem(entry) {
+      return `<div class="list-item"><div class="list-icon" style="--item-color:${esc(entry.color||'#68e1b5')}">${esc(entry.icon||'⏳')}</div><div class="list-main"><strong>${esc(entry.timerName)}</strong><span>${formatDateTime(entry.startedAt)} ・ ${num(entry.durationHours)}時間${entry.completed?' ・ 完了':entry.resetAt?' ・ リセット':' ・ 進行中'}</span></div><div class="list-value"><strong style="color:${entry.completed?'var(--primary)':'var(--muted)'}">${entry.completed?'解禁':'待機'}</strong></div><button class="icon-btn" data-action="edit-history" data-kind="wait" data-id="${esc(entry.id)}" aria-label="待機履歴を編集">✎</button></div>`;
+    }
+    function adjustmentHistoryItem(entry) {
+      const positive=num(entry.amount)>=0;return `<div class="list-item"><div class="list-icon" style="--item-color:${positive?'#68e1b5':'#ff7d8d'}">±</div><div class="list-main"><strong>ポイント調整</strong><span>${formatDateTime(entry.recordedAt)}${entry.memo?` ・ ${esc(entry.memo)}`:''}</span></div><div class="list-value"><strong style="color:${positive?'var(--primary)':'var(--danger)'}">${positive?'+':''}${formatPoints(entry.amount)}</strong><span class="tiny muted">pt</span></div><button class="icon-btn" data-action="edit-history" data-kind="adjustment" data-id="${esc(entry.id)}" aria-label="ポイント調整を編集">✎</button></div>`;
+    }
+
+    function renderRewards() {
+      const points = pointSummary();
+      const calories = calorieSummary();
+      const cashRewards = cashRewardSummary();
+      const fixed = state.rewards.filter(r=>r.enabled && ['point_fixed','free','other'].includes(r.type)).sort((a,b)=>a.order-b.order);
+      const calorieRewards = state.rewards.filter(r=>r.enabled && r.type==='calorie').sort((a,b)=>a.order-b.order);
+      document.getElementById('rewards-content').innerHTML = `
+        <div class="grid-2"><div class="card stat"><span class="label">使用できる報酬ポイント</span><strong style="color:var(--gold)">${formatPoints(points.balance)} pt</strong><span class="sub">通算使用 ${formatPoints(points.spent)} pt</span></div><div class="card stat"><span class="label">カロリー残高</span><strong style="color:var(--primary)">${Math.max(0,calories.balance).toLocaleString('ja-JP')} kcal</strong><span class="sub">通算消費 ${calories.spent.toLocaleString('ja-JP')} kcal</span></div><div class="card stat"><span class="label">現金報酬残高</span><strong style="color:var(--gold)">¥${Math.max(0,cashRewards.balance).toLocaleString('ja-JP')}</strong><span class="sub">獲得 ¥${cashRewards.earned.toLocaleString('ja-JP')} / 使用 ¥${cashRewards.used.toLocaleString('ja-JP')}</span><button class="btn small-btn gold" style="margin-top:9px" data-action="open-cash-usage" ${cashRewards.balance<1?'disabled':''}>金額を指定して使う</button></div></div>
+        ${renderActiveRewardTimer()}
+        <div class="section-head"><h3>固定ポイント報酬</h3></div>
+        ${fixed.length ? `<div class="list">${fixed.map(reward=>`<div class="list-item">
+          <div class="list-icon" style="--item-color:${esc(reward.color)}">${esc(reward.icon)}</div>
+          <div class="list-main"><strong>${esc(reward.name)}</strong><span>${reward.type==='free'?'無料報酬':`1回 ${formatPoints(reward.fixedPointCost)} pt`}</span></div>
+          <button class="btn small-btn gold" data-action="use-fixed-reward" data-id="${esc(reward.id)}" ${reward.type!=='free'&&points.balance + 1e-9 < reward.fixedPointCost ? 'disabled' : ''}>使用</button>
+        </div>`).join('')}</div>` : '<div class="empty">固定報酬はまだありません。</div>'}
+        <div class="section-head" style="margin-top:18px"><h3>カロリー報酬</h3><button class="btn small-btn ghost" data-action="open-calorie-input">カロリー入力</button></div>
+        ${calorieRewards.length ? `<div class="list">${calorieRewards.map(reward=>{
+          const required=Math.max(1,num(reward.requiredCalories));const available=Math.floor(Math.max(0,calories.balance)/required);const after=Math.max(0,calories.balance-num(reward.calorieCost,required));
+          const itemLabel=/ビール/.test(reward.name)?'飲む':'受け取る';
+          return `<div class="list-item reward-choice-item"><div class="list-icon" style="--item-color:${esc(reward.color)}">${esc(reward.icon)}</div><div class="list-main"><strong>${esc(reward.name)}</strong><span>${required.toLocaleString('ja-JP')} kcal必要 ・ ${available?`${available}回使用可能／使用後 ${after.toLocaleString('ja-JP')} kcal`:`残り ${(required-Math.max(0,calories.balance)).toLocaleString('ja-JP')} kcal`}${reward.cashAlternativeEnabled&&num(reward.cashAlternativeAmount)>0?` ・ 現金化 ¥${num(reward.cashAlternativeAmount).toLocaleString('ja-JP')}`:''}</span></div><div class="button-row reward-actions"><button class="btn small-btn primary" data-action="use-calorie-reward" data-id="${esc(reward.id)}" ${available<1?'disabled':''}>${itemLabel}</button>${reward.cashAlternativeEnabled&&num(reward.cashAlternativeAmount)>0?`<button class="btn small-btn gold" data-action="cash-calorie-reward" data-id="${esc(reward.id)}" ${available<1?'disabled':''}>¥${num(reward.cashAlternativeAmount).toLocaleString('ja-JP')}にする</button>`:''}</div></div>`;
+        }).join('')}</div>` : '<div class="empty">カロリー報酬はまだありません。</div>'}
+      `;
+    }
+
+    function renderStats() {
+      const range=rangeForPeriod(statsPeriod);const trainingEntries=entriesInRange(state.trainingHistory,range);const rewardEntries=entriesInRange(state.rewardHistory,range);
+      const totals=trainingTotals(trainingEntries);const points=pointSummary();const calories=calorieSummary();const streak=streakSummary();
+      const usedPoints=rewardEntries.reduce((sum,entry)=>sum+num(entry.usedPoints),0);
+      const periodCalories=trainingEntries.reduce((sum,entry)=>sum+num(entry.activeCalories),0)+entriesInRange(state.calorieHistory,range).reduce((sum,entry)=>sum+Math.max(0,num(entry.amount)),0);
+      const themeMap=new Map();
+      for(const entry of trainingEntries){const item=themeMap.get(entry.themeId)||{name:entry.themeName,seconds:0,count:0,points:0,last:null};item.seconds+=num(entry.durationSeconds);item.count++;item.points+=num(entry.earnedPoints);if(!item.last||new Date(entry.endAt)>new Date(item.last))item.last=entry.endAt;themeMap.set(entry.themeId,item);}
+      const rewardMap=new Map();
+      for(const entry of rewardEntries){const item=rewardMap.get(entry.rewardId)||{name:entry.rewardName,seconds:0,count:0,points:0};item.seconds+=num(entry.durationSeconds);item.count++;item.points+=num(entry.usedPoints);rewardMap.set(entry.rewardId,item);}
+      const days=[];const today=todayRange()[0];
+      for(let offset=6;offset>=0;offset--){const start=today-offset*86400000;const end=start+86400000;const entries=entriesInRange(state.trainingHistory,[start,end]);const summary=trainingTotals(entries);days.push({date:new Date(start),...summary});}
+      const maxDay=Math.max(1,...days.map(day=>day.seconds));
+      const achievedIds=new Set(state.achievements.map(item=>item.id));
+      document.getElementById('stats-content').innerHTML=`
+        <label>集計期間<select id="stats-period"><option value="today" ${statsPeriod==='today'?'selected':''}>今日</option><option value="yesterday" ${statsPeriod==='yesterday'?'selected':''}>昨日</option><option value="last7" ${statsPeriod==='last7'?'selected':''}>過去7日間</option><option value="week" ${statsPeriod==='week'?'selected':''}>今週（月〜日）</option><option value="lastWeek" ${statsPeriod==='lastWeek'?'selected':''}>先週</option><option value="month" ${statsPeriod==='month'?'selected':''}>今月</option><option value="lastMonth" ${statsPeriod==='lastMonth'?'selected':''}>先月</option><option value="year" ${statsPeriod==='year'?'selected':''}>今年</option><option value="all" ${statsPeriod==='all'?'selected':''}>全期間</option></select></label>
+        <div class="grid-2">
+          <div class="card stat"><span class="label">合計修業時間</span><strong>${formatLongDuration(totals.seconds)}</strong><span class="sub">${totals.count}回・平均 ${totals.count?formatLongDuration(totals.seconds/totals.count):'0分'}</span></div>
+          <div class="card stat"><span class="label">獲得 / 使用ポイント</span><strong>${formatPoints(totals.points)} / ${formatPoints(usedPoints)}</strong><span class="sub">現在残高 ${formatPoints(points.balance)}pt</span></div>
+          <div class="card stat"><span class="label">アクティブカロリー</span><strong>${periodCalories.toLocaleString('ja-JP')} kcal</strong><span class="sub">現在残高 ${Math.max(0,calories.balance).toLocaleString('ja-JP')}kcal</span></div>
+          <div class="card stat"><span class="label">継続日数</span><strong>${streak.current}日</strong><span class="sub">最長 ${streak.longest}日・実施 ${streak.days}日</span></div>
+        </div>
+        ${state.settings.showGraph?`<div class="card"><div class="card-body"><div class="section-head"><h3>直近7日間の修業</h3></div><div class="bar-chart" role="img" aria-label="直近7日間の日別修業時間">${days.map(day=>`<div class="bar-column"><div class="bar-track"><div class="bar" style="height:${Math.max(3,day.seconds/maxDay*100)}%" title="${formatLongDuration(day.seconds)}"></div></div><div class="bar-label">${day.date.getMonth()+1}/${day.date.getDate()}<br>${Math.round(day.seconds/60)}分</div></div>`).join('')}</div></div></div>`:''}
+        <div class="card"><div class="card-body"><div class="section-head"><h3>修業テーマ別</h3></div>${themeMap.size?`<div class="table-list"><div class="table-row muted"><span>テーマ</span><span>時間 / 回数</span><span>獲得pt</span></div>${[...themeMap.values()].sort((a,b)=>b.seconds-a.seconds).map(item=>`<div class="table-row"><strong>${esc(item.name)}</strong><span>${formatLongDuration(item.seconds)} / ${item.count}回</span><span>${formatPoints(item.points)}</span></div>`).join('')}</div>`:'<div class="empty">この期間の修業はありません。</div>'}</div></div>
+        <div class="card"><div class="card-body"><div class="section-head"><h3>報酬別</h3></div>${rewardMap.size?`<div class="table-list"><div class="table-row muted"><span>報酬</span><span>時間 / 回数</span><span>使用pt</span></div>${[...rewardMap.values()].sort((a,b)=>b.count-a.count).map(item=>`<div class="table-row"><strong>${esc(item.name)}</strong><span>${formatLongDuration(item.seconds)} / ${item.count}回</span><span>${formatPoints(item.points)}</span></div>`).join('')}</div>`:'<div class="empty">この期間の報酬使用はありません。</div>'}</div></div>
+        <div class="card"><div class="card-body"><div class="section-head"><div><p class="eyebrow">ACHIEVEMENTS</p><h3>実績・称号</h3></div><span class="small muted">${achievedIds.size}/${ACHIEVEMENT_DEFS.length}</span></div><div class="list">${ACHIEVEMENT_DEFS.map(def=>{const achieved=state.achievements.find(item=>item.id===def.id);return `<div class="list-item" style="opacity:${achieved?1:.46}"><div class="list-icon">${achieved?'★':'☆'}</div><div class="list-main"><strong>${esc(def.name)}</strong><span>${esc(def.description)}${achieved?` ・ ${formatDateTime(achieved.achievedAt)}達成`:''}</span></div></div>`;}).join('')}</div></div></div>`;
+    }
+
+    function renderHistory() {
+      const entries = [...state.trainingHistory].sort((a,b)=>new Date(b.endAt)-new Date(a.endAt));
+      const rewards = [...state.rewardHistory].sort((a,b)=>new Date(b.endAt || b.createdAt)-new Date(a.endAt || a.createdAt));
+      const cashUsages = [...state.cashUsageHistory].sort((a,b)=>new Date(b.usedAt || b.createdAt)-new Date(a.usedAt || a.createdAt));
+      const calories = [...state.calorieHistory].sort((a,b)=>new Date(b.recordedAt)-new Date(a.recordedAt));
+      const waits = [...state.waitHistory].sort((a,b)=>new Date(b.startedAt)-new Date(a.startedAt));
+      const adjustments=[...state.pointAdjustments].sort((a,b)=>new Date(b.recordedAt)-new Date(a.recordedAt));
+      document.getElementById('history-content').innerHTML = `
+        <div class="callout">各履歴の編集ボタンから内容の変更・削除ができます。変更後は残高、統計、レベル、実績を再計算します。</div>
+        <div class="section-head"><h3>修業履歴</h3></div>
+        ${entries.length ? `<div class="list">${entries.map(trainingHistoryItem).join('')}</div>` : '<div class="empty">修業履歴はまだありません。</div>'}
+        <div class="section-head" style="margin-top:18px"><h3>報酬履歴</h3></div>
+        ${rewards.length ? `<div class="list">${rewards.map(rewardHistoryItem).join('')}</div>` : '<div class="empty">報酬履歴はまだありません。</div>'}
+        <div class="section-head" style="margin-top:18px"><h3>現金報酬の使用履歴</h3></div>
+        ${cashUsages.length ? `<div class="list">${cashUsages.map(cashUsageHistoryItem).join('')}</div>` : '<div class="empty">現金報酬はまだ使用していません。</div>'}
+        <div class="section-head" style="margin-top:18px"><h3>カロリー入力履歴</h3></div>
+        ${calories.length ? `<div class="list">${calories.map(calorieHistoryItem).join('')}</div>` : '<div class="empty">カロリー入力履歴はまだありません。</div>'}
+        <div class="section-head" style="margin-top:18px"><h3>待機タイマー履歴</h3></div>
+        ${waits.length ? `<div class="list">${waits.map(waitHistoryItem).join('')}</div>` : '<div class="empty">待機履歴はまだありません。</div>'}
+        <div class="section-head" style="margin-top:18px"><h3>ポイント調整履歴</h3></div>
+        ${adjustments.length ? `<div class="list">${adjustments.map(adjustmentHistoryItem).join('')}</div>` : '<div class="empty">ポイント調整履歴はまだありません。</div>'}`;
+    }
+
+    function renderSettings() {
+      const themes = [...state.trainingThemes].sort((a,b)=>a.order-b.order);
+      document.getElementById('settings-content').innerHTML = `
+        <div class="card"><div class="card-body">
+          <div class="section-head"><div><p class="eyebrow">TRAINING THEMES</p><h3>修業設定</h3></div></div>
+          <div class="list">${themes.map((theme,index) => `<div class="list-item" style="opacity:${theme.enabled ? 1 : .52}">
+            <div class="list-icon" style="--item-color:${esc(theme.color)}">${esc(theme.icon)}</div>
+            <div class="list-main"><strong>${esc(theme.name)}</strong><span>${formatLongDuration(theme.secondsPerPoint)} / 1pt${theme.enabled ? '' : ' ・ 非表示'}</span></div>
+            <button class="icon-btn" data-action="move-theme-up" data-id="${esc(theme.id)}" ${index===0?'disabled':''} aria-label="上へ移動">↑</button>
+            <button class="icon-btn" data-action="edit-theme" data-id="${esc(theme.id)}" aria-label="編集">✎</button>
+          </div>`).join('')}</div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="section-head"><div><p class="eyebrow">REWARD ITEMS</p><h3>報酬設定</h3></div><button class="btn small-btn primary" data-action="add-reward">追加</button></div>
+          <div class="list">${state.rewards.sort((a,b)=>a.order-b.order).map(reward=>`<div class="list-item" style="opacity:${reward.enabled?1:.52}">
+            <div class="list-icon" style="--item-color:${esc(reward.color)}">${esc(reward.icon)}</div>
+            <div class="list-main"><strong>${esc(reward.name)}</strong><span>${reward.type==='point_time' ? `1分 ${formatPoints(reward.pointCostPerMinute)}pt（1ptで${formatPoints(1/Math.max(.0001,reward.pointCostPerMinute))}分）` : ['point_fixed','other'].includes(reward.type) ? `${formatPoints(reward.fixedPointCost)}pt / 回` : reward.type==='free' ? '無料報酬' : `${num(reward.requiredCalories).toLocaleString('ja-JP')}kcal / 回${reward.cashAlternativeEnabled&&num(reward.cashAlternativeAmount)>0?`・現金化¥${num(reward.cashAlternativeAmount).toLocaleString('ja-JP')}`:''}`}${reward.enabled?'':' ・ 非表示'}</span></div>
+            <button class="icon-btn" data-action="edit-reward" data-id="${esc(reward.id)}" aria-label="編集">✎</button>
+          </div>`).join('')}</div>
+        </div></div>
+        <div class="card"><div class="card-body"><div class="timer-title"><div><p class="eyebrow">WAIT TIMER</p><h3 style="margin:0">${esc(state.settings.waitTimerDefinition.name)}</h3><div class="small muted" style="margin-top:5px">${num(state.settings.waitTimerDefinition.durationHours)}時間 ・ ${esc(state.settings.waitTimerDefinition.completeLabel)}</div></div><button class="btn small-btn" data-action="edit-wait-settings">編集</button></div></div></div>
+        <div class="card"><div class="card-body"><div class="timer-title"><div><p class="eyebrow">LEVEL RULES</p><h3 style="margin:0">レベル設定</h3><div class="small muted" style="margin-top:5px">${state.settings.levelMode==='hours'?'通算修業時間':'通算獲得ポイント'}で判定 ・ 全${state.settings.levels.length}段階</div></div><button class="btn small-btn" data-action="edit-level-settings">編集</button></div></div></div>
+        <div class="card"><div class="card-body"><div class="timer-title"><div><p class="eyebrow">DISPLAY</p><h3 style="margin:0">表示・動作設定</h3><div class="small muted" style="margin-top:5px">${state.settings.theme==='light'?'ライト':'ダーク'} ・ 小数${num(state.settings.pointDecimals)}桁 ・ 週${num(state.settings.weekStartsOn)===0?'日':'月'}曜始まり</div></div><button class="btn small-btn" data-action="edit-display-settings">編集</button></div></div></div>
+        <div class="card"><div class="card-body"><div class="section-head"><div><p class="eyebrow">DATA</p><h3>データ管理</h3></div></div><div class="button-row"><button class="btn" data-action="point-adjustment">ポイント調整</button><button class="btn" data-action="export-data">JSONエクスポート</button><button class="btn" data-action="import-data">JSONインポート</button><button class="btn danger" data-action="reset-all-data">全データリセット</button></div><div class="small muted" style="margin-top:10px">保存形式バージョン ${SCHEMA_VERSION} ・ この端末のブラウザ内に保存</div></div></div>`;
+    }
+
+    function render() {
+      renderHeader();
+      renderHome();
+      renderTraining();
+      renderRewards();
+      renderStats();
+      renderHistory();
+      renderSettings();
+    }
+
+    function liveTick() {
+      const timer = state.activeTrainingTimer;
+      if (timer) {
+        const elapsed = activeTrainingElapsedMs(timer) / 1000;
+        const points = calculateTrainingPoints(elapsed, timer.snapshot);
+        const base = elapsed % Math.max(1, timer.snapshot.secondsPerPoint);
+        const next = base === 0 && elapsed > 0 ? 0 : Math.max(0, timer.snapshot.secondsPerPoint - base);
+        document.querySelectorAll('[data-live-training-time]').forEach(el => el.textContent = formatDuration(elapsed));
+        document.querySelectorAll('[data-live-training-points]').forEach(el => el.textContent = `${formatPoints(points)} pt`);
+        document.querySelectorAll('[data-live-training-next]').forEach(el => el.textContent = formatDuration(next));
+      }
+      const rewardTimer = state.activeRewardTimer;
+      if (rewardTimer) {
+        const raw = activeRewardRawElapsedMs(rewardTimer);
+        const affordable = rewardAffordableMs(rewardTimer);
+        if (rewardTimer.status === 'running' && raw >= affordable) {
+          rewardTimer.accumulatedMs = Math.max(0, affordable);
+          rewardTimer.status = 'limit'; rewardTimer.pausedAt = isoNow(); saveState(); render();
+        }
+        const elapsed = activeRewardElapsedMs(rewardTimer) / 1000;
+        const used = calculateRewardPointCost(elapsed, rewardTimer.snapshot);
+        const balance = pointSummary().balance;
+        document.querySelectorAll('[data-live-reward-time]').forEach(el=>el.textContent=formatDuration(elapsed));
+        document.querySelectorAll('[data-live-reward-cost]').forEach(el=>el.textContent=`${formatPoints(used)} pt`);
+        document.querySelectorAll('[data-live-reward-after]').forEach(el=>el.textContent=`${formatPoints(Math.max(0,balance-used))} pt`);
+        document.querySelectorAll('[data-live-reward-affordable]').forEach(el=>el.textContent=Number.isFinite(affordable)?formatDuration(affordable/1000):'無制限');
+      }
+      if(state.activeWaitTimer){
+        if(completeWaitIfNeeded())render();
+        const remaining=waitTimerRemainingMs();
+        document.querySelectorAll('[data-live-wait]').forEach(el=>el.textContent=remaining<=0?state.activeWaitTimer.completeLabel:waitDurationLabel(remaining));
+      }
+    }
+
+    function startTraining() {
+      if (state.activeTrainingTimer) return showToast('すでに修業タイマーが進行中です。');
+      const select = document.getElementById('training-theme-select');
+      const theme = getTheme(select?.value || state.trainingThemes.find(t=>t.enabled)?.id);
+      if (!theme) return showToast('有効な修業テーマがありません。');
+      const now = isoNow();
+      state.activeTrainingTimer = {sessionId:uid('training-session'), status:'running', startedAt:now, lastStartedAt:now, pausedAt:null, accumulatedMs:0, snapshot:trainingSnapshot(theme), createdAt:now};
+      saveState(); render(); showToast(`${theme.name}の修業を開始しました。`);
+    }
+    function pauseTraining() {
+      const timer = state.activeTrainingTimer;
+      if (!timer || timer.status !== 'running') return;
+      timer.accumulatedMs = activeTrainingElapsedMs(timer);
+      timer.pausedAt = isoNow(); timer.status = 'paused'; saveState(); render();
+    }
+    function resumeTraining() {
+      const timer = state.activeTrainingTimer;
+      if (!timer || timer.status !== 'paused') return;
+      timer.lastStartedAt = isoNow(); timer.pausedAt = null; timer.status = 'running'; saveState(); render();
+    }
+    function cancelTraining() {
+      if (!state.activeTrainingTimer || !confirmAction('進行中の修業を記録せずにキャンセルしますか？')) return;
+      state.activeTrainingTimer = null; saveState(); render(); showToast('修業タイマーをキャンセルしました。');
+    }
+    function openFinishTraining() {
+      const timer = state.activeTrainingTimer;
+      if (!timer || finishing) return;
+      const durationSeconds = Math.max(1, Math.floor(activeTrainingElapsedMs(timer) / 1000));
+      const points = calculateTrainingPoints(durationSeconds, timer.snapshot);
+      finishing = true;
+      openModal('修業を記録', `
+        <form id="finish-training-form" class="form-grid">
+          <div class="callout">開始時点の換算率（${formatLongDuration(timer.snapshot.secondsPerPoint)}で1pt、×${timer.snapshot.multiplier}、固定＋${timer.snapshot.fixedBonus}）を使用します。</div>
+          <label>修業テーマ<select name="themeId">${state.trainingThemes.map(theme=>`<option value="${esc(theme.id)}" ${theme.id===timer.snapshot.themeId?'selected':''}>${esc(theme.icon)} ${esc(theme.name)}</option>`).join('')}</select></label>
+          <div class="form-columns"><label>実施時間（分）<input name="durationMinutes" type="number" inputmode="decimal" min="0.01" step="0.01" value="${(durationSeconds/60).toFixed(2)}" required></label><label>獲得ポイント<input name="earnedPoints" type="number" inputmode="decimal" step="any" value="${points}" required></label></div>
+          <label>記録日時<input name="recordedAt" type="datetime-local" value="${localDateTimeValue()}" required></label>
+          ${timer.snapshot.isExercise ? '<label>アクティブカロリー（任意）<input name="activeCalories" type="number" inputmode="decimal" min="0" step="1" value="0"></label>' : '<input name="activeCalories" type="hidden" value="0">'}
+          <label>メモ<textarea name="memo" placeholder="今日の気づきや成果"></textarea></label>
+          <button class="btn primary block" type="submit">この内容で保存</button>
+        </form>`);
+    }
+    function submitFinishTraining(form) {
+      if (!state.activeTrainingTimer) return closeModal();
+      const timer = state.activeTrainingTimer;
+      if (state.trainingHistory.some(entry => entry.sourceSessionId === timer.sessionId)) { state.activeTrainingTimer = null; saveState(); closeModal(); render(); return showToast('この修業はすでに記録済みです。'); }
+      const data = new FormData(form);
+      const selectedTheme = getTheme(data.get('themeId')) || getTheme(timer.snapshot.themeId);
+      const durationSeconds = Math.max(1, num(data.get('durationMinutes')) * 60);
+      const endAt = new Date(data.get('recordedAt')).toISOString();
+      const startAt = new Date(new Date(endAt).getTime() - durationSeconds * 1000).toISOString();
+      commitTrainingHistoryEntry({
+        id:uid('training'), sourceSessionId:timer.sessionId, themeId:selectedTheme?.id || timer.snapshot.themeId,
+        themeName:selectedTheme?.name || timer.snapshot.themeName, themeIcon:selectedTheme?.icon || timer.snapshot.themeIcon, themeColor:selectedTheme?.color || timer.snapshot.themeColor,
+        startAt, endAt, durationSeconds, earnedPoints:num(data.get('earnedPoints')), secondsPerPoint:timer.snapshot.secondsPerPoint,
+        multiplier:timer.snapshot.multiplier, fixedBonus:timer.snapshot.fixedBonus, activeCalories:Math.max(0,num(data.get('activeCalories'))),
+        memo:String(data.get('memo') || ''), inputMethod:'timer', createdAt:isoNow(), updatedAt:isoNow()
+      });
+      state.activeTrainingTimer = null;
+      saveState(); closeModal(); render(); showToast('修業を記録し、ポイントを獲得しました。');
+    }
+
+    function startReward() {
+      if (state.activeRewardTimer) return showToast('すでに報酬タイマーが進行中です。');
+      const reward = getReward(document.getElementById('reward-timer-select')?.value);
+      if (!reward) return showToast('時間報酬を選択してください。');
+      if (!(reward.pointCostPerMinute > 0)) return showToast('1分あたりの必要ポイントを設定してください。');
+      if (!(pointSummary().balance > 0)) return showToast('使用できるポイントがありません。');
+      const now = isoNow();
+      state.activeRewardTimer = {sessionId:uid('reward-session'),status:'running',startedAt:now,lastStartedAt:now,pausedAt:null,accumulatedMs:0,snapshot:rewardSnapshot(reward),createdAt:now};
+      saveState(); render(); showToast(`${reward.name}の報酬タイマーを開始しました。`);
+    }
+    function pauseReward() {
+      const timer=state.activeRewardTimer;
+      if (!timer || timer.status!=='running') return;
+      timer.accumulatedMs=activeRewardElapsedMs(timer); timer.pausedAt=isoNow(); timer.status='paused'; saveState(); render();
+    }
+    function resumeReward() {
+      const timer=state.activeRewardTimer;
+      if (!timer || timer.status!=='paused') return;
+      if (!(pointSummary().balance>0)) return showToast('使用できるポイントがありません。');
+      timer.lastStartedAt=isoNow(); timer.pausedAt=null; timer.status='running'; saveState(); render();
+    }
+    function cancelReward() {
+      if (!state.activeRewardTimer || !confirmAction('報酬タイマーをポイント消費なしでキャンセルしますか？')) return;
+      state.activeRewardTimer=null; saveState(); render(); showToast('報酬タイマーをキャンセルしました。');
+    }
+    function openFinishReward() {
+      const timer=state.activeRewardTimer;
+      if (!timer || finishing) return;
+      const durationSeconds=Math.max(0,activeRewardElapsedMs(timer)/1000);
+      const cost=Math.min(pointSummary().balance,calculateRewardPointCost(durationSeconds,timer.snapshot));
+      finishing=true;
+      openModal('報酬タイマーを精算',`<form id="finish-reward-form" class="form-grid">
+        <div class="callout">${esc(timer.snapshot.rewardName)}を${formatLongDuration(durationSeconds)}使用しました。実際の経過時間分だけポイントを消費します。</div>
+        <div class="form-columns"><label>使用時間（分）<input name="durationMinutes" type="number" min="0" step="0.01" value="${(durationSeconds/60).toFixed(2)}" required></label><label>使用ポイント<input name="usedPoints" type="number" min="0" step="any" value="${cost}" required></label></div>
+        <label>メモ<textarea name="memo"></textarea></label>
+        <button class="btn gold block" type="submit">精算して終了</button>
+      </form>`);
+    }
+    function submitFinishReward(form) {
+      const timer=state.activeRewardTimer;
+      if (!timer) return closeModal();
+      if (state.rewardHistory.some(entry=>entry.sourceSessionId===timer.sessionId)) {state.activeRewardTimer=null;saveState();closeModal();render();return showToast('この報酬はすでに精算済みです。');}
+      const data=new FormData(form);
+      const balance=pointSummary().balance;
+      const usedPoints=Math.max(0,num(data.get('usedPoints')));
+      if (usedPoints>balance+1e-9) return showToast('ポイント残高を超えて消費できません。');
+      const durationSeconds=Math.max(0,num(data.get('durationMinutes'))*60);
+      const endAt=isoNow();
+      commitRewardHistoryEntry({
+        id:uid('reward'),sourceSessionId:timer.sessionId,rewardId:timer.snapshot.rewardId,rewardName:timer.snapshot.rewardName,rewardIcon:timer.snapshot.rewardIcon,rewardColor:timer.snapshot.rewardColor,
+        rewardType:'point_time',startAt:timer.startedAt,endAt,durationSeconds,usedPoints,usedCalories:0,
+        pointCostPerMinute:timer.snapshot.pointCostPerMinute,balanceAfter:balance-usedPoints,calorieBalanceAfter:null,memo:String(data.get('memo')||''),createdAt:isoNow(),updatedAt:isoNow()
+      });
+      state.activeRewardTimer=null;saveState();closeModal();render();showToast('報酬を精算し、ポイントを消費しました。');
+    }
+    function useFixedReward(id,button) {
+      const reward=getReward(id);
+      if (!reward || !['point_fixed','free','other'].includes(reward.type)) return;
+      if(button)button.disabled=true;
+      const balance=pointSummary().balance;
+      const cost=reward.type==='free'?0:Math.max(0,num(reward.fixedPointCost));
+      if (balance+1e-9<cost) {if(button)button.disabled=false;return showToast('ポイントが不足しています。');}
+      if (!confirmAction(`「${reward.name}」を${formatPoints(cost)}ポイントで使用しますか？`)) {if(button)button.disabled=false;return;}
+      commitRewardHistoryEntry({
+        id:uid('reward'),sourceSessionId:uid('fixed-use'),rewardId:reward.id,rewardName:reward.name,rewardIcon:reward.icon,rewardColor:reward.color,rewardType:reward.type,
+        startAt:null,endAt:isoNow(),durationSeconds:0,usedPoints:cost,usedCalories:0,fixedPointCost:cost,balanceAfter:balance-cost,calorieBalanceAfter:null,memo:'',createdAt:isoNow(),updatedAt:isoNow()
+      });
+      saveState();render();showToast(`${reward.name}を使用しました。`);
+    }
+
+    function openCalorieInput() {
+      const trainingOptions=[...state.trainingHistory].sort((a,b)=>new Date(b.endAt)-new Date(a.endAt)).slice(0,30);
+      openModal('アクティブカロリー入力',`<form id="calorie-form" class="form-grid">
+        <div class="form-columns"><label>日付<input name="recordedAt" type="datetime-local" value="${localDateTimeValue()}" required></label><label>アクティブカロリー<input name="amount" type="number" inputmode="decimal" min="0.01" step="any" value="100" required></label></div>
+        <div class="form-columns"><label>運動の種類<input name="exerciseType" maxlength="50" value="エアロバイク" required></label><label>運動時間（分）<input name="durationMinutes" type="number" min="0" step="1" value="30"></label></div>
+        <label>関連する修業履歴<select name="relatedTrainingId"><option value="">関連付けなし</option>${trainingOptions.map(entry=>`<option value="${esc(entry.id)}">${esc(entry.themeName)}・${formatDateTime(entry.endAt)}</option>`).join('')}</select></label>
+        <label>メモ<textarea name="memo"></textarea></label>
+        <button class="btn primary block" type="submit">カロリーを追加</button>
+      </form>`);
+    }
+    function submitCalorie(form) {
+      const data=new FormData(form);const amount=num(data.get('amount'));
+      if(!(amount>0))return showToast('0より大きいカロリーを入力してください。');
+      state.calorieHistory.push({id:uid('calorie'),recordedAt:new Date(data.get('recordedAt')).toISOString(),amount,exerciseType:String(data.get('exerciseType')||'運動'),durationMinutes:Math.max(0,num(data.get('durationMinutes'))),relatedTrainingId:String(data.get('relatedTrainingId')||'')||null,memo:String(data.get('memo')||''),createdAt:isoNow(),updatedAt:isoNow()});
+      saveState();closeModal();render();showToast(`${amount.toLocaleString('ja-JP')}kcalを追加しました。`);
+    }
+    function openCashUsage() {
+      const summary=cashRewardSummary();
+      if(summary.balance<1)return showToast('使用できる現金報酬残高がありません。');
+      const suggested=Math.min(300,Math.floor(summary.balance));
+      openModal('現金報酬を使う',`<form id="cash-usage-form" class="form-grid"><input type="hidden" name="sourceSessionId" value="${esc(uid('cash-use'))}"><div class="callout">使用可能残高：¥${Math.floor(summary.balance).toLocaleString('ja-JP')}。使った金額は残高から差し引かれ、履歴に残ります。</div><div class="form-columns"><label>使用する金額（円）<input name="amount" type="number" inputmode="numeric" min="1" max="${Math.floor(summary.balance)}" step="1" value="${suggested}" required></label><label>使用日時<input name="usedAt" type="datetime-local" value="${localDateTimeValue()}" required></label></div><label>用途・メモ<textarea name="memo" placeholder="例：ビール代として使用"></textarea></label><button class="btn gold block" type="submit">この金額を使用する</button></form>`);
+    }
+    function submitCashUsage(form) {
+      const data=new FormData(form);const amount=Math.max(0,Math.floor(num(data.get('amount'))));const summary=cashRewardSummary();
+      if(!(amount>0))return showToast('使用する金額を1円以上で入力してください。');
+      if(amount>summary.balance+1e-9)return showToast(`使用できるのは¥${Math.max(0,Math.floor(summary.balance)).toLocaleString('ja-JP')}までです。`);
+      const entry={id:uid('cash-usage'),sourceSessionId:String(data.get('sourceSessionId')||''),amount,usedAt:new Date(data.get('usedAt')).toISOString(),memo:String(data.get('memo')||''),createdAt:isoNow(),updatedAt:isoNow()};
+      if(!commitCashUsageEntry(entry))return showToast('この使用記録は登録済みか、残高が不足しています。');
+      saveState();closeModal();render();showToast(`¥${amount.toLocaleString('ja-JP')}を使用しました。残高は¥${Math.max(0,cashRewardSummary().balance).toLocaleString('ja-JP')}です。`);
+    }
+    function useCalorieReward(id,button,outcome='item') {
+      const reward=getReward(id);if(!reward||reward.type!=='calorie')return;
+      if(button)button.disabled=true;
+      const isCash=outcome==='cash';const cashAmount=isCash?Math.max(0,Math.floor(num(reward.cashAlternativeAmount))):0;
+      if(isCash&&(!reward.cashAlternativeEnabled||!(cashAmount>0))){if(button)button.disabled=false;return showToast('この報酬には現金化金額が設定されていません。');}
+      const summary=calorieSummary();const required=Math.max(1,num(reward.requiredCalories));const cost=reward.consumeCalories?Math.max(0,num(reward.calorieCost,required)):0;
+      const usedCount=state.rewardHistory.filter(entry=>entry.rewardId===id).length;
+      if(reward.usageLimit&&usedCount>=reward.usageLimit){if(button)button.disabled=false;return showToast('この報酬の使用回数上限に達しています。');}
+      if(summary.balance+1e-9<required){if(button)button.disabled=false;return showToast('アクティブカロリーが不足しています。');}
+      if(summary.balance+1e-9<cost){if(button)button.disabled=false;return showToast('消費に必要なカロリーが不足しています。');}
+      const confirmation=isCash?`「${reward.name}」の代わりに¥${cashAmount.toLocaleString('ja-JP')}を現金報酬残高へ追加しますか？ ${cost.toLocaleString('ja-JP')}kcalを消費し、使用後は${(summary.balance-cost).toLocaleString('ja-JP')}kcalです。`:`「${reward.name}」を使用しますか？ ${cost.toLocaleString('ja-JP')}kcalを消費し、使用後は${(summary.balance-cost).toLocaleString('ja-JP')}kcalです。`;
+      if(!confirmAction(confirmation)){if(button)button.disabled=false;return;}
+      commitRewardHistoryEntry({id:uid('reward'),sourceSessionId:uid('calorie-use'),rewardId:reward.id,rewardName:reward.name,rewardIcon:reward.icon,rewardColor:reward.color,rewardType:'calorie',rewardOutcome:isCash?'cash':'item',cashAmount,startAt:null,endAt:isoNow(),durationSeconds:0,usedPoints:0,usedCalories:cost,requiredCalories:required,balanceAfter:pointSummary().balance,calorieBalanceAfter:summary.balance-cost,memo:isCash?'報酬を現金化':'',createdAt:isoNow(),updatedAt:isoNow()});
+      saveState();render();showToast(isCash?`¥${cashAmount.toLocaleString('ja-JP')}を現金報酬残高へ追加しました。残高は¥${cashRewardSummary().balance.toLocaleString('ja-JP')}です。`:`${reward.name}を使用しました。残り${(summary.balance-cost).toLocaleString('ja-JP')}kcalです。`);
+    }
+
+    function startWait() {
+      if(state.activeWaitTimer)return showToast('待機タイマーはすでに進行中です。');
+      const def=state.settings.waitTimerDefinition;const startedAt=isoNow();const durationHours=Math.max(.01,num(def.durationHours,72));const endsAt=new Date(Date.now()+durationHours*3600000).toISOString();const historyId=uid('wait');
+      state.activeWaitTimer={sessionId:uid('wait-session'),historyId,name:def.name,icon:def.icon,color:def.color,completeLabel:def.completeLabel,durationHours,startedAt,endsAt,completedAt:null,status:'waiting'};
+      state.waitHistory.push({id:historyId,sourceSessionId:state.activeWaitTimer.sessionId,timerName:def.name,icon:def.icon,color:def.color,startedAt,durationHours,endsAt,completedAt:null,resetAt:null,completed:false,memo:'',createdAt:isoNow(),updatedAt:isoNow()});
+      saveState();render();showToast(`${def.name}を開始しました。`);
+    }
+    function notifyWaitComplete() {
+      if(state.settings.vibration&&navigator.vibrate)navigator.vibrate([180,90,180]);
+      if(state.settings.sound){try{const AudioContext=window.AudioContext||window.webkitAudioContext;const context=new AudioContext();const oscillator=context.createOscillator();const gain=context.createGain();oscillator.connect(gain);gain.connect(context.destination);oscillator.frequency.value=660;gain.gain.setValueAtTime(.08,context.currentTime);gain.gain.exponentialRampToValueAtTime(.001,context.currentTime+.35);oscillator.start();oscillator.stop(context.currentTime+.35);}catch{}}
+    }
+    function completeWaitIfNeeded() {
+      const timer=state.activeWaitTimer;if(!timer||timer.status==='completed'||waitTimerRemainingMs(timer)>0)return false;
+      timer.status='completed';timer.completedAt=isoNow();const history=state.waitHistory.find(item=>item.id===timer.historyId);if(history){history.completed=true;history.completedAt=timer.completedAt;history.updatedAt=isoNow();}notifyWaitComplete();saveState();return true;
+    }
+    function resetWait() {
+      const timer=state.activeWaitTimer;if(!timer||!confirmAction('待機タイマーをリセットして履歴に残しますか？'))return;
+      const history=state.waitHistory.find(item=>item.id===timer.historyId);if(history){history.resetAt=isoNow();history.updatedAt=isoNow();}
+      state.activeWaitTimer=null;saveState();render();showToast('待機タイマーをリセットしました。');
+    }
+    function cancelWait() {
+      const timer=state.activeWaitTimer;if(!timer||!confirmAction('待機タイマーと今回の開始記録を取り消しますか？'))return;
+      state.waitHistory=state.waitHistory.filter(item=>item.id!==timer.historyId);state.activeWaitTimer=null;saveState();render();showToast('待機タイマーの記録を取り消しました。');
+    }
+    function openWaitSettings() {
+      const def=state.settings.waitTimerDefinition;openModal('待機タイマー設定',`<form id="wait-settings-form" class="form-grid"><label>タイマー名<input name="name" maxlength="50" value="${esc(def.name)}" required></label><label>待機時間（時間）<input name="durationHours" type="number" min="0.01" step="0.01" value="${num(def.durationHours)}" required></label><label>経過時の表示<input name="completeLabel" maxlength="50" value="${esc(def.completeLabel)}" required></label><div class="form-columns"><label>色<input name="color" type="color" value="${esc(def.color)}"></label><label>アイコン<input name="icon" maxlength="4" value="${esc(def.icon)}"></label></div><button class="btn primary block" type="submit">保存</button></form>`);
+    }
+    function submitWaitSettings(form) {
+      const data=new FormData(form);const next={name:String(data.get('name')).trim(),durationHours:Math.max(.01,num(data.get('durationHours'),72)),completeLabel:String(data.get('completeLabel')).trim(),color:String(data.get('color')),icon:String(data.get('icon')||'⏳')};
+      if(!next.name||!next.completeLabel)return showToast('タイマー名と経過時表示を入力してください。');
+      if(state.activeWaitTimer){const apply=globalThis.confirm('進行中の待機タイマーにも新しい設定を適用しますか？\nOK：進行中にも適用／キャンセル：次回開始分から適用');if(apply){const timer=state.activeWaitTimer;timer.name=next.name;timer.icon=next.icon;timer.color=next.color;timer.completeLabel=next.completeLabel;timer.durationHours=next.durationHours;timer.endsAt=new Date(new Date(timer.startedAt).getTime()+next.durationHours*3600000).toISOString();const history=state.waitHistory.find(item=>item.id===timer.historyId);if(history)Object.assign(history,{timerName:next.name,icon:next.icon,color:next.color,durationHours:next.durationHours,endsAt:timer.endsAt,updatedAt:isoNow()});}}
+      state.settings.waitTimerDefinition=next;saveState();closeModal();render();showToast('待機タイマー設定を保存しました。');
+    }
+    function openLevelSettings() {
+      openModal('レベル設定',`<form id="level-settings-form" class="form-grid"><label>レベル判定方式<select name="levelMode"><option value="points" ${state.settings.levelMode!=='hours'?'selected':''}>通算獲得ポイント</option><option value="hours" ${state.settings.levelMode==='hours'?'selected':''}>通算修業時間</option></select></label><div class="callout">各レベルの到達値を設定します。通算獲得ポイント方式ではポイント、通算修業時間方式では時間として扱います。</div>${state.settings.levels.map((level,index)=>`<div class="form-columns"><label>レベル${index+1}名<input name="levelName${index}" value="${esc(level.name)}" required></label><label>到達値<input name="levelRequired${index}" type="number" min="0" step="any" value="${num(level.requiredPoints)}" required></label></div>`).join('')}<button class="btn primary block" type="submit">保存</button></form>`);
+    }
+    function submitLevelSettings(form) {
+      const data=new FormData(form);const levels=state.settings.levels.map((level,index)=>({level:index+1,name:String(data.get(`levelName${index}`)).trim()||`レベル${index+1}`,requiredPoints:Math.max(0,num(data.get(`levelRequired${index}`)))})).sort((a,b)=>a.requiredPoints-b.requiredPoints).map((level,index)=>({...level,level:index+1}));
+      state.settings.levelMode=String(data.get('levelMode'));state.settings.levels=levels;saveState();closeModal();render();showToast('レベル設定を保存しました。');
+    }
+
+    function historyCollection(kind,source=state) {
+      return kind==='training'?source.trainingHistory:kind==='reward'?source.rewardHistory:kind==='cash'?source.cashUsageHistory:kind==='calorie'?source.calorieHistory:kind==='adjustment'?source.pointAdjustments:source.waitHistory;
+    }
+    function openHistoryEditor(kind,id) {
+      const entry=historyCollection(kind).find(item=>item.id===id);if(!entry)return showToast('履歴が見つかりません。');
+      let fields='';
+      if(kind==='training')fields=`<label>修業テーマ<select name="themeId">${state.trainingThemes.map(theme=>`<option value="${esc(theme.id)}" ${theme.id===entry.themeId?'selected':''}>${esc(theme.icon)} ${esc(theme.name)}</option>`).join('')}${state.trainingThemes.some(theme=>theme.id===entry.themeId)?'':`<option value="${esc(entry.themeId)}" selected>${esc(entry.themeName)}（削除済み）</option>`}</select></label><div class="form-columns"><label>実施時間（分）<input name="durationMinutes" type="number" min="0.01" step="any" value="${num(entry.durationSeconds)/60}" required></label><label>獲得ポイント<input name="earnedPoints" type="number" step="any" value="${num(entry.earnedPoints)}" required></label></div><div class="form-columns"><label>記録日時<input name="recordedAt" type="datetime-local" value="${localDateTimeValue(new Date(entry.endAt))}" required></label><label>アクティブカロリー<input name="activeCalories" type="number" min="0" step="any" value="${num(entry.activeCalories)}"></label></div><label>メモ<textarea name="memo">${esc(entry.memo||'')}</textarea></label>`;
+      if(kind==='reward')fields=`<label>報酬項目<select name="rewardId">${state.rewards.map(reward=>`<option value="${esc(reward.id)}" ${reward.id===entry.rewardId?'selected':''}>${esc(reward.icon)} ${esc(reward.name)}</option>`).join('')}${state.rewards.some(reward=>reward.id===entry.rewardId)?'':`<option value="${esc(entry.rewardId)}" selected>${esc(entry.rewardName)}（削除済み）</option>`}</select></label><div class="form-columns"><label>使用時間（分）<input name="durationMinutes" type="number" min="0" step="any" value="${num(entry.durationSeconds)/60}"></label><label>使用ポイント<input name="usedPoints" type="number" min="0" step="any" value="${num(entry.usedPoints)}"></label></div><div class="form-columns"><label>使用カロリー<input name="usedCalories" type="number" min="0" step="any" value="${num(entry.usedCalories)}"></label><label>使用日時<input name="recordedAt" type="datetime-local" value="${localDateTimeValue(new Date(entry.endAt||entry.createdAt))}" required></label></div><label>メモ<textarea name="memo">${esc(entry.memo||'')}</textarea></label>`;
+      if(kind==='calorie')fields=`<div class="form-columns"><label>アクティブカロリー<input name="amount" type="number" step="any" value="${num(entry.amount)}" required></label><label>運動の種類<input name="exerciseType" value="${esc(entry.exerciseType||'')}" required></label></div><div class="form-columns"><label>運動時間（分）<input name="durationMinutes" type="number" min="0" step="any" value="${num(entry.durationMinutes)}"></label><label>記録日時<input name="recordedAt" type="datetime-local" value="${localDateTimeValue(new Date(entry.recordedAt))}" required></label></div><label>メモ<textarea name="memo">${esc(entry.memo||'')}</textarea></label>`;
+      if(kind==='wait')fields=`<label>タイマー名<input name="timerName" value="${esc(entry.timerName)}" required></label><div class="form-columns"><label>開始日時<input name="startedAt" type="datetime-local" value="${localDateTimeValue(new Date(entry.startedAt))}" required></label><label>設定時間（時間）<input name="durationHours" type="number" min="0.01" step="any" value="${num(entry.durationHours)}" required></label></div><label class="check-row"><input name="completed" type="checkbox" ${entry.completed?'checked':''}> 完了済みにする</label><label>メモ<textarea name="memo">${esc(entry.memo||'')}</textarea></label>`;
+      if(kind==='adjustment')fields=`<div class="form-columns"><label>調整ポイント<input name="amount" type="number" step="any" value="${num(entry.amount)}" required></label><label>調整日時<input name="recordedAt" type="datetime-local" value="${localDateTimeValue(new Date(entry.recordedAt))}" required></label></div><label>理由・メモ<textarea name="memo">${esc(entry.memo||'')}</textarea></label>`;
+      if(kind==='cash')fields=`<div class="callout">使用履歴を変更すると、現金報酬残高も再計算されます。</div><div class="form-columns"><label>使用金額（円）<input name="amount" type="number" min="1" step="1" value="${Math.max(1,Math.floor(num(entry.amount)))}" required></label><label>使用日時<input name="usedAt" type="datetime-local" value="${localDateTimeValue(new Date(entry.usedAt||entry.createdAt))}" required></label></div><label>用途・メモ<textarea name="memo">${esc(entry.memo||'')}</textarea></label>`;
+      openModal('履歴を編集',`<form id="history-edit-form" class="form-grid"><input type="hidden" name="kind" value="${esc(kind)}"><input type="hidden" name="id" value="${esc(id)}">${fields}<button class="btn primary block" type="submit">変更を保存</button><button class="btn danger block" type="button" data-action="delete-history" data-kind="${esc(kind)}" data-id="${esc(id)}">この履歴を削除</button></form>`);
+    }
+    function saveHistoryEdit(form) {
+      const data=new FormData(form);const kind=String(data.get('kind'));const id=String(data.get('id'));const entry=historyCollection(kind).find(item=>item.id===id);if(!entry)return closeModal();const original=structuredClone(entry);
+      if(kind==='training'){
+        const theme=getTheme(data.get('themeId'));const durationSeconds=Math.max(1,num(data.get('durationMinutes'))*60);const endAt=new Date(data.get('recordedAt')).toISOString();
+        Object.assign(entry,{themeId:theme?.id||entry.themeId,themeName:theme?.name||entry.themeName,themeIcon:theme?.icon||entry.themeIcon,themeColor:theme?.color||entry.themeColor,durationSeconds,endAt,startAt:new Date(new Date(endAt).getTime()-durationSeconds*1000).toISOString(),earnedPoints:num(data.get('earnedPoints')),activeCalories:Math.max(0,num(data.get('activeCalories'))),memo:String(data.get('memo')||''),updatedAt:isoNow()});
+      }
+      if(kind==='reward'){
+        const reward=getReward(data.get('rewardId'));const durationSeconds=Math.max(0,num(data.get('durationMinutes'))*60);const endAt=new Date(data.get('recordedAt')).toISOString();
+        Object.assign(entry,{rewardId:reward?.id||entry.rewardId,rewardName:reward?.name||entry.rewardName,rewardIcon:reward?.icon||entry.rewardIcon,rewardColor:reward?.color||entry.rewardColor,durationSeconds,endAt,startAt:durationSeconds?new Date(new Date(endAt).getTime()-durationSeconds*1000).toISOString():null,usedPoints:Math.max(0,num(data.get('usedPoints'))),usedCalories:Math.max(0,num(data.get('usedCalories'))),memo:String(data.get('memo')||''),updatedAt:isoNow()});
+      }
+      if(kind==='calorie')Object.assign(entry,{amount:num(data.get('amount')),exerciseType:String(data.get('exerciseType')||'運動'),durationMinutes:Math.max(0,num(data.get('durationMinutes'))),recordedAt:new Date(data.get('recordedAt')).toISOString(),memo:String(data.get('memo')||''),updatedAt:isoNow()});
+      if(kind==='wait'){
+        const startedAt=new Date(data.get('startedAt')).toISOString();const durationHours=Math.max(.01,num(data.get('durationHours')));const completed=data.has('completed');
+        Object.assign(entry,{timerName:String(data.get('timerName')).trim(),startedAt,durationHours,endsAt:new Date(new Date(startedAt).getTime()+durationHours*3600000).toISOString(),completed,completedAt:completed?(entry.completedAt||isoNow()):null,memo:String(data.get('memo')||''),updatedAt:isoNow()});
+      }
+      if(kind==='adjustment')Object.assign(entry,{amount:num(data.get('amount')),recordedAt:new Date(data.get('recordedAt')).toISOString(),memo:String(data.get('memo')||''),updatedAt:isoNow()});
+      if(kind==='cash')Object.assign(entry,{amount:Math.max(1,Math.floor(num(data.get('amount')))),usedAt:new Date(data.get('usedAt')).toISOString(),memo:String(data.get('memo')||''),updatedAt:isoNow()});
+      const pointBalance=pointSummary().balance;const calorieBalance=calorieSummary().balance;const cashBalance=cashRewardSummary().balance;
+      if(cashBalance<0){Object.assign(entry,original);return showToast('使用額が現金報酬残高を超えるため保存できません。');}
+      if((pointBalance<0||calorieBalance<0)&&!globalThis.confirm(`編集後の残高がマイナスになります。\nポイント: ${formatPoints(pointBalance)}pt\nカロリー: ${calorieBalance.toLocaleString('ja-JP')}kcal\n保存しますか？`)) {state=loadState();return;}
+      saveState();closeModal();render();showToast('履歴を更新し、残高と統計を再計算しました。');
+    }
+    function deleteHistory(kind,id) {
+      if(kind==='wait'&&state.activeWaitTimer?.historyId===id)return showToast('進行中の待機履歴は、先にタイマーをリセットしてください。');
+      const next=structuredClone(state);const collection=historyCollection(kind,next);const index=collection.findIndex(item=>item.id===id);if(index<0)return;collection.splice(index,1);
+      const nextPoints=pointSummary(next).balance;const nextCalories=calorieSummary(next).balance;const nextCash=cashRewardSummary(next).balance;let message='この履歴を削除しますか？ 残高・統計・レベル・実績を再計算します。';
+      if(nextCash<0)return showToast('この現金報酬はすでに使用済みのため、獲得履歴を削除できません。');
+      if(nextPoints<0||nextCalories<0)message+=`\n\n警告：削除後の残高がマイナスになります。\nポイント: ${formatPoints(nextPoints)}pt\nカロリー: ${nextCalories.toLocaleString('ja-JP')}kcal`;
+      if(!confirmAction(message))return;state=next;saveState();closeModal();render();showToast('履歴を削除して再計算しました。');
+    }
+
+    function openDisplaySettings() {
+      openModal('表示・動作設定',`<form id="display-settings-form" class="form-grid"><label>アプリ名<input name="appName" maxlength="40" value="${esc(state.settings.appName)}" required></label><div class="form-columns"><label>配色<select name="theme"><option value="dark" ${state.settings.theme!=='light'?'selected':''}>ダークモード</option><option value="light" ${state.settings.theme==='light'?'selected':''}>ライトモード</option></select></label><label>ポイント小数桁数<input name="pointDecimals" type="number" min="0" max="6" step="1" value="${num(state.settings.pointDecimals)}"></label></div><div class="form-columns"><label>時間表示<select name="timeFormat"><option value="hms" ${state.settings.timeFormat!=='decimal'?'selected':''}>時間・分</option><option value="decimal" ${state.settings.timeFormat==='decimal'?'selected':''}>小数時間</option></select></label><label>週の開始曜日<select name="weekStartsOn"><option value="1" ${num(state.settings.weekStartsOn)===1?'selected':''}>月曜日</option><option value="0" ${num(state.settings.weekStartsOn)===0?'selected':''}>日曜日</option></select></label></div><label class="check-row"><input name="showGraph" type="checkbox" ${state.settings.showGraph?'checked':''}> 統計グラフを表示</label><label class="check-row"><input name="sound" type="checkbox" ${state.settings.sound?'checked':''}> 完了音を使用</label><label class="check-row"><input name="vibration" type="checkbox" ${state.settings.vibration?'checked':''}> バイブレーションを使用</label><label class="check-row"><input name="confirmations" type="checkbox" ${state.settings.confirmations?'checked':''}> 重要操作の確認ダイアログを表示</label><button class="btn primary block" type="submit">保存</button></form>`);
+    }
+    function openPointAdjustment() {
+      openModal('ポイント残高を調整',`<form id="point-adjustment-form" class="form-grid"><div class="callout">履歴に残る調整です。加算は正の数、減算は負の数で入力してください。</div><div class="form-columns"><label>調整ポイント<input name="amount" type="number" step="any" value="0" required></label><label>調整日時<input name="recordedAt" type="datetime-local" value="${localDateTimeValue()}" required></label></div><label>理由・メモ<textarea name="memo" required></textarea></label><button class="btn primary block" type="submit">調整を記録</button></form>`);
+    }
+    function submitPointAdjustment(form) {
+      const data=new FormData(form);const amount=num(data.get('amount'));if(!amount)return showToast('0以外の調整ポイントを入力してください。');state.pointAdjustments.push({id:uid('point-adjustment'),amount,recordedAt:new Date(data.get('recordedAt')).toISOString(),memo:String(data.get('memo')||''),createdAt:isoNow(),updatedAt:isoNow()});saveState();closeModal();render();showToast('ポイント調整を記録しました。');
+    }
+    function submitDisplaySettings(form) {
+      const data=new FormData(form);Object.assign(state.settings,{appName:String(data.get('appName')).trim()||'人生RPG',theme:String(data.get('theme')),pointDecimals:clamp(Math.floor(num(data.get('pointDecimals'),2)),0,6),timeFormat:String(data.get('timeFormat')),weekStartsOn:num(data.get('weekStartsOn'))===0?0:1,showGraph:data.has('showGraph'),sound:data.has('sound'),vibration:data.has('vibration'),confirmations:data.has('confirmations')});
+      saveState();closeModal();render();showToast('表示・動作設定を保存しました。');
+    }
+    function exportedJson() {return JSON.stringify({...state,schemaVersion:SCHEMA_VERSION,exportedAt:isoNow()},null,2);}
+    function openExportData() {
+      openModal('JSONエクスポート',`<div class="form-grid"><div class="callout">この文字列またはダウンロードしたJSONファイルを安全な場所へ保存してください。</div><label>JSONデータ<textarea id="export-json" style="min-height:240px" readonly>${esc(exportedJson())}</textarea></label><div class="button-row"><button class="btn primary" data-action="download-export">JSONファイルを保存</button><button class="btn" data-action="copy-export">文字列をコピー</button></div></div>`);
+    }
+    async function copyExport() {
+      const text=document.getElementById('export-json')?.value||exportedJson();
+      try{await navigator.clipboard.writeText(text);showToast('JSON文字列をコピーしました。');}catch{const area=document.getElementById('export-json');area?.select();showToast('文字列を選択しました。コピー操作を行ってください。');}
+    }
+    function downloadExport() {
+      const blob=new Blob([exportedJson()],{type:'application/json'});const url=URL.createObjectURL(blob);const anchor=document.createElement('a');anchor.href=url;anchor.download=`jinsei-rpg-${localDateTimeValue().slice(0,10)}.json`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+    function openImportData() {
+      openModal('JSONインポート',`<form id="import-form" class="form-grid"><div class="callout">JSONファイルまたはJSON文字列を指定してください。先に現在データをエクスポートしておくと安全です。</div><label>JSONファイル<input name="file" type="file" accept="application/json,.json"></label><label>またはJSON文字列<textarea name="jsonText" style="min-height:150px" placeholder="{ ... }"></textarea></label><label>取り込み方法<select name="mode"><option value="overwrite">現在データを上書き</option><option value="merge">現在データへ追加</option></select></label><button class="btn primary block" type="submit">内容を確認してインポート</button></form>`);
+    }
+    function validateImport(raw) {
+      if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('JSONの最上位はオブジェクトである必要があります。');
+      for(const key of ['trainingThemes','rewards','trainingHistory','rewardHistory','cashUsageHistory','calorieHistory','waitHistory','pointAdjustments','achievements'])if(raw[key]!=null&&!Array.isArray(raw[key]))throw new Error(`${key} は配列である必要があります。`);
+      return normalizeState(raw);
+    }
+    function mergeState(imported) {
+      const next=structuredClone(state);const keys=['trainingThemes','rewards','trainingHistory','rewardHistory','cashUsageHistory','calorieHistory','waitHistory','pointAdjustments','achievements'];const duplicates=[];
+      for(const key of keys){const ids=new Set(next[key].map(item=>item.id));for(const item of imported[key]){if(ids.has(item.id)){duplicates.push(`${key}: ${item.id}`);continue;}next[key].push(item);ids.add(item.id);}}
+      if(!next.activeTrainingTimer&&imported.activeTrainingTimer)next.activeTrainingTimer=imported.activeTrainingTimer;else if(next.activeTrainingTimer&&imported.activeTrainingTimer)duplicates.push('進行中の修業タイマー');
+      if(!next.activeRewardTimer&&imported.activeRewardTimer)next.activeRewardTimer=imported.activeRewardTimer;else if(next.activeRewardTimer&&imported.activeRewardTimer)duplicates.push('進行中の報酬タイマー');
+      if(!next.activeWaitTimer&&imported.activeWaitTimer)next.activeWaitTimer=imported.activeWaitTimer;else if(next.activeWaitTimer&&imported.activeWaitTimer)duplicates.push('進行中の待機タイマー');
+      return {next,duplicates};
+    }
+    async function submitImport(form) {
+      const data=new FormData(form);const file=data.get('file');let textValue=String(data.get('jsonText')||'').trim();
+      if(file&&file.size)textValue=await file.text();if(!textValue)return showToast('JSONファイルまたは文字列を指定してください。');
+      try{
+        const imported=validateImport(JSON.parse(textValue));const mode=String(data.get('mode'));
+        if(mode==='overwrite'){if(!globalThis.confirm('現在の全データをインポート内容で上書きしますか？'))return;state=imported;}
+        else{const merged=mergeState(imported);if(merged.duplicates.length&&!globalThis.confirm(`重複IDまたは競合が${merged.duplicates.length}件あります。重複を除外して追加しますか？\n\n${merged.duplicates.slice(0,8).join('\n')}`))return;state=merged.next;}
+        saveState();closeModal();render();showToast('JSONデータをインポートしました。');
+      }catch(error){showToast(`インポートできません：${error.message}`);}
+    }
+    function resetAllData() {
+      if(!globalThis.confirm('人生RPGの設定・履歴・ポイント・タイマーをすべて初期化します。元に戻せません。実行しますか？'))return;
+      state=createDefaultState();saveState();closeModal();nav('home');showToast('全データを初期状態へ戻しました。');
+    }
+
+    function openManualTraining() {
+      const enabled = state.trainingThemes.filter(t=>t.enabled).sort((a,b)=>a.order-b.order);
+      if (!enabled.length) return showToast('有効な修業テーマを追加してください。');
+      openModal('修業を手動記録', `
+        <div class="segmented"><button type="button" class="active" data-action="manual-mode" data-mode="duration">時間で入力</button><button type="button" data-action="manual-mode" data-mode="range">開始・終了</button></div>
+        <form id="manual-training-form" class="form-grid" style="margin-top:14px">
+          <input type="hidden" name="mode" value="duration">
+          <label>修業テーマ<select name="themeId">${enabled.map(t=>`<option value="${esc(t.id)}">${esc(t.icon)} ${esc(t.name)}</option>`).join('')}</select></label>
+          <div id="manual-duration-fields"><label>修業時間（分）<input name="durationMinutes" type="number" inputmode="decimal" min="0.01" step="0.01" value="30"></label></div>
+          <div id="manual-range-fields" hidden><div class="form-grid"><label>開始日時<input name="startAt" type="datetime-local" value="${localDateTimeValue(new Date(Date.now()-30*60000))}"></label><label>終了日時<input name="endAt" type="datetime-local" value="${localDateTimeValue()}"></label></div></div>
+          <label>記録日<input name="recordedAt" type="datetime-local" value="${localDateTimeValue()}" required></label>
+          <label>メモ<textarea name="memo" placeholder="任意"></textarea></label>
+          <button class="btn primary block" type="submit">計算して確認</button>
+        </form>`);
+    }
+    function toggleManualMode(mode) {
+      document.querySelectorAll('[data-action="manual-mode"]').forEach(button => button.classList.toggle('active', button.dataset.mode===mode));
+      document.querySelector('#manual-training-form [name="mode"]').value = mode;
+      document.getElementById('manual-duration-fields').hidden = mode !== 'duration';
+      document.getElementById('manual-range-fields').hidden = mode !== 'range';
+    }
+    function submitManualTraining(form) {
+      const data = new FormData(form);
+      const theme = getTheme(data.get('themeId'));
+      if (!theme) return showToast('修業テーマを選択してください。');
+      let startAt, endAt, durationSeconds;
+      if (data.get('mode') === 'range') {
+        startAt = new Date(data.get('startAt')); endAt = new Date(data.get('endAt'));
+        durationSeconds = (endAt - startAt) / 1000;
+        if (!(durationSeconds > 0)) return showToast('終了日時は開始日時より後にしてください。');
+      } else {
+        durationSeconds = num(data.get('durationMinutes')) * 60;
+        if (!(durationSeconds > 0)) return showToast('修業時間を入力してください。');
+        endAt = new Date(data.get('recordedAt')); startAt = new Date(endAt.getTime() - durationSeconds * 1000);
+      }
+      const snapshot = trainingSnapshot(theme);
+      const points = calculateTrainingPoints(durationSeconds, snapshot);
+      const draft = {theme, snapshot, startAt:startAt.toISOString(), endAt:endAt.toISOString(), durationSeconds, points, memo:String(data.get('memo')||'')};
+      openModal('記録内容の確認', `
+        <form id="confirm-manual-training-form" class="form-grid">
+          <input type="hidden" name="draft" value="${esc(encodeURIComponent(JSON.stringify(draft)))}">
+          <div class="callout">${esc(theme.name)}を${formatLongDuration(durationSeconds)}記録します。現在の換算設定をスナップショットとして保存します。</div>
+          <label>獲得ポイント<input name="earnedPoints" type="number" inputmode="decimal" step="any" value="${points}" required></label>
+          ${theme.isExercise ? '<label>アクティブカロリー（任意）<input name="activeCalories" type="number" min="0" step="1" value="0"></label>' : '<input name="activeCalories" type="hidden" value="0">'}
+          <label>メモ<textarea name="memo">${esc(draft.memo)}</textarea></label>
+          <button class="btn primary block" type="submit">この内容で保存</button>
+        </form>`);
+    }
+    function confirmManualTraining(form) {
+      const data = new FormData(form);
+      const draft = JSON.parse(decodeURIComponent(data.get('draft')));
+      commitTrainingHistoryEntry({
+        id:uid('training'), sourceSessionId:null, themeId:draft.theme.id, themeName:draft.theme.name, themeIcon:draft.theme.icon, themeColor:draft.theme.color,
+        startAt:draft.startAt, endAt:draft.endAt, durationSeconds:draft.durationSeconds, earnedPoints:num(data.get('earnedPoints')),
+        secondsPerPoint:draft.snapshot.secondsPerPoint, multiplier:draft.snapshot.multiplier, fixedBonus:draft.snapshot.fixedBonus,
+        activeCalories:Math.max(0,num(data.get('activeCalories'))), memo:String(data.get('memo')||''), inputMethod:'manual', createdAt:isoNow(), updatedAt:isoNow()
+      });
+      saveState(); closeModal(); render(); showToast('修業を手動記録しました。');
+    }
+
+    function openThemeForm(id = null) {
+      const theme = id ? getTheme(id) : null;
+      openModal(theme ? '修業テーマを編集' : '修業テーマを追加', `
+        <form id="theme-form" class="form-grid">
+          <input type="hidden" name="id" value="${esc(theme?.id || '')}">
+          <div class="form-columns"><label>修業名<input name="name" maxlength="40" value="${esc(theme?.name || '')}" required></label><label>アイコン<input name="icon" maxlength="4" value="${esc(theme?.icon || '✦')}" required></label></div>
+          <label>説明<input name="description" maxlength="100" value="${esc(theme?.description || '')}"></label>
+          <div class="form-columns"><label>色<input name="color" type="color" value="${esc(theme?.color || '#68e1b5')}"></label><label>1ポイントに必要な秒数<input name="secondsPerPoint" type="number" min="1" step="1" value="${num(theme?.secondsPerPoint,600)}" required></label></div>
+          <div class="form-columns"><label>ポイント倍率<input name="multiplier" type="number" min="0" step="0.1" value="${num(theme?.multiplier,1)}" required></label><label>固定ボーナス<input name="fixedBonus" type="number" step="any" value="${num(theme?.fixedBonus)}" required></label></div>
+          <label class="check-row"><input name="enabled" type="checkbox" ${theme?.enabled !== false ? 'checked' : ''}> 有効・一覧に表示</label>
+          <label class="check-row"><input name="earnsPoints" type="checkbox" ${theme?.earnsPoints !== false ? 'checked' : ''}> 報酬ポイントを獲得する</label>
+          <label class="check-row"><input name="isExercise" type="checkbox" ${theme?.isExercise ? 'checked' : ''}> 運動系の修業</label>
+          <label>メモ<textarea name="memo">${esc(theme?.memo || '')}</textarea></label>
+          <button class="btn primary block" type="submit">保存</button>
+          ${theme ? '<button class="btn danger block" type="button" data-action="delete-theme" data-id="'+esc(theme.id)+'">テーマを削除</button>' : ''}
+        </form>`);
+    }
+    function submitTheme(form) {
+      const data = new FormData(form);
+      const id = String(data.get('id') || '');
+      const existing = id ? getTheme(id) : null;
+      const updated = {
+        id: existing?.id || uid('theme'), name:String(data.get('name')).trim(), description:String(data.get('description')||''), icon:String(data.get('icon')||'✦'), color:String(data.get('color')||'#68e1b5'),
+        order:existing?.order ?? state.trainingThemes.length, enabled:data.has('enabled'), isExercise:data.has('isExercise'), earnsPoints:data.has('earnsPoints'), pointMode:'rate',
+        secondsPerPoint:Math.max(1,num(data.get('secondsPerPoint'),600)), multiplier:Math.max(0,num(data.get('multiplier'),1)), fixedBonus:num(data.get('fixedBonus')), memo:String(data.get('memo')||''),
+        createdAt:existing?.createdAt || isoNow(), updatedAt:isoNow()
+      };
+      if (!updated.name) return showToast('修業名を入力してください。');
+      if (existing) Object.assign(existing, updated); else state.trainingThemes.push(updated);
+      saveState(); closeModal(); render(); showToast(existing ? '修業テーマを更新しました。' : '修業テーマを追加しました。');
+    }
+    function deleteTheme(id) {
+      const theme = getTheme(id);
+      if (!theme || !confirmAction(`「${theme.name}」を削除しますか？ 過去の履歴は残ります。`)) return;
+      if (state.activeTrainingTimer?.snapshot.themeId === id) return showToast('進行中の修業テーマは削除できません。');
+      state.trainingThemes = state.trainingThemes.filter(item => item.id !== id);
+      saveState(); closeModal(); render(); showToast('修業テーマを削除しました。');
+    }
+    function moveThemeUp(id) {
+      const sorted = [...state.trainingThemes].sort((a,b)=>a.order-b.order);
+      const index = sorted.findIndex(theme=>theme.id===id);
+      if (index <= 0) return;
+      [sorted[index-1], sorted[index]] = [sorted[index], sorted[index-1]];
+      sorted.forEach((theme,order)=>theme.order=order);
+      state.trainingThemes = sorted; saveState(); render();
+    }
+
+    function openRewardForm(id=null) {
+      const reward=id?getReward(id):null;
+      openModal(reward?'報酬項目を編集':'報酬項目を追加',`<form id="reward-form" class="form-grid">
+        <input type="hidden" name="id" value="${esc(reward?.id||'')}">
+        <div class="form-columns"><label>報酬名<input name="name" maxlength="40" value="${esc(reward?.name||'')}" required></label><label>アイコン<input name="icon" maxlength="4" value="${esc(reward?.icon||'♢')}" required></label></div>
+        <label>種類<select name="type" data-action="reward-type-change"><option value="point_time" ${!reward||reward.type==='point_time'?'selected':''}>ポイント時間報酬</option><option value="point_fixed" ${reward?.type==='point_fixed'?'selected':''}>ポイント固定報酬</option><option value="calorie" ${reward?.type==='calorie'?'selected':''}>カロリー報酬</option><option value="free" ${reward?.type==='free'?'selected':''}>無料報酬</option><option value="other" ${reward?.type==='other'?'selected':''}>その他</option></select></label>
+        <div id="reward-time-fields" ${reward&&reward.type!=='point_time'?'hidden':''}><label>1分あたりの必要ポイント<input name="pointCostPerMinute" type="number" min="0.0001" step="any" value="${num(reward?.pointCostPerMinute,1)}"></label></div>
+        <div id="reward-fixed-fields" ${!['point_fixed','other'].includes(reward?.type)?'hidden':''}><label>固定消費ポイント<input name="fixedPointCost" type="number" min="0" step="any" value="${num(reward?.fixedPointCost,10)}"></label></div>
+        <div id="reward-calorie-fields" ${reward?.type!=='calorie'?'hidden':''} class="form-grid"><div class="form-columns"><label>使用に必要なカロリー<input name="requiredCalories" type="number" min="1" step="1" value="${num(reward?.requiredCalories,500)}"></label><label>1回の消費カロリー<input name="calorieCost" type="number" min="0" step="1" value="${num(reward?.calorieCost,500)}"></label></div><label class="check-row"><input name="consumeCalories" type="checkbox" ${reward?.consumeCalories!==false?'checked':''}> 使用時にカロリーを消費</label><div class="form-columns"><label class="check-row"><input name="cashAlternativeEnabled" type="checkbox" ${reward?.cashAlternativeEnabled?'checked':''}> 現金化の選択肢を使う</label><label>現金化する金額（円）<input name="cashAlternativeAmount" type="number" min="0" step="1" value="${num(reward?.cashAlternativeAmount,0)}"></label></div><label>使用回数上限（空欄は無制限）<input name="usageLimit" type="number" min="1" step="1" value="${reward?.usageLimit??''}"></label></div>
+        <label>色<input name="color" type="color" value="${esc(reward?.color||'#f2c96d')}"></label>
+        <label class="check-row"><input name="enabled" type="checkbox" ${reward?.enabled!==false?'checked':''}> 有効・一覧に表示</label>
+        <label>メモ<textarea name="memo">${esc(reward?.memo||'')}</textarea></label>
+        <button class="btn primary block" type="submit">保存</button>
+        ${reward?`<button class="btn danger block" type="button" data-action="delete-reward" data-id="${esc(reward.id)}">報酬項目を削除</button>`:''}
+      </form>`);
+    }
+    function toggleRewardType(value) {
+      document.getElementById('reward-time-fields').hidden=value!=='point_time';
+      document.getElementById('reward-fixed-fields').hidden=!['point_fixed','other'].includes(value);
+      document.getElementById('reward-calorie-fields').hidden=value!=='calorie';
+    }
+    function submitReward(form) {
+      const data=new FormData(form);const id=String(data.get('id')||'');const existing=id?getReward(id):null;
+      const type=String(data.get('type'));
+      const updated={
+        id:existing?.id||uid('reward'),name:String(data.get('name')||'').trim(),icon:String(data.get('icon')||'♢'),color:String(data.get('color')||'#f2c96d'),type,
+        order:existing?.order??state.rewards.length,enabled:data.has('enabled'),pointCostPerMinute:type==='point_time'?Math.max(.0001,num(data.get('pointCostPerMinute'),1)):0,
+        fixedPointCost:['point_fixed','other'].includes(type)?Math.max(0,num(data.get('fixedPointCost'))):0,requiredCalories:type==='calorie'?Math.max(1,num(data.get('requiredCalories'),500)):0,consumeCalories:type==='calorie'?data.has('consumeCalories'):true,
+        calorieCost:type==='calorie'?Math.max(0,num(data.get('calorieCost'),500)):0,cashAlternativeEnabled:type==='calorie'?data.has('cashAlternativeEnabled'):false,cashAlternativeAmount:type==='calorie'?Math.max(0,Math.floor(num(data.get('cashAlternativeAmount')))):0,usageLimit:type==='calorie'&&String(data.get('usageLimit')||'').trim()?Math.max(1,Math.floor(num(data.get('usageLimit')))):null,description:existing?.description||'',memo:String(data.get('memo')||''),createdAt:existing?.createdAt||isoNow(),updatedAt:isoNow()
+      };
+      if (!updated.name)return showToast('報酬名を入力してください。');
+      if (updated.cashAlternativeEnabled && !(updated.cashAlternativeAmount > 0)) return showToast('現金化する金額を1円以上で設定してください。');
+      if (existing)Object.assign(existing,updated);else state.rewards.push(updated);
+      saveState();closeModal();render();showToast(existing?'報酬項目を更新しました。':'報酬項目を追加しました。');
+    }
+    function deleteReward(id) {
+      const reward=getReward(id);if(!reward||!confirmAction(`「${reward.name}」を削除しますか？ 過去の履歴は残ります。`))return;
+      if(state.activeRewardTimer?.snapshot.rewardId===id)return showToast('進行中の報酬は削除できません。');
+      state.rewards=state.rewards.filter(item=>item.id!==id);saveState();closeModal();render();showToast('報酬項目を削除しました。');
+    }
+
+    let waitingServiceWorker = null;
+    function showPwaUpdate(worker) {
+      waitingServiceWorker = worker;
+      document.getElementById('pwa-update').hidden = false;
+    }
+    function applyPwaUpdate() {
+      if (waitingServiceWorker) waitingServiceWorker.postMessage({type:'SKIP_WAITING'});
+    }
+    async function registerPwa() {
+      if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+      if (globalThis.location?.protocol === 'file:') return;
+      try {
+        const registration = await navigator.serviceWorker.register('./sw.js', {scope:'./'});
+        if (registration.waiting && navigator.serviceWorker.controller) showPwaUpdate(registration.waiting);
+        registration.addEventListener('updatefound', () => {
+          const installing = registration.installing;
+          if (!installing) return;
+          installing.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && navigator.serviceWorker.controller) showPwaUpdate(installing);
+          });
+        });
+        window.addEventListener('focus', () => registration.update());
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          refreshing = true;
+          globalThis.location.reload();
+        });
+      } catch (error) {
+        console.warn('PWAのオフライン機能を開始できませんでした。', error);
+      }
+    }
+
+    document.addEventListener('click', event => {
+      const navButton = event.target.closest('[data-screen]');
+      if (navButton) return nav(navButton.dataset.screen);
+      const button = event.target.closest('[data-action]');
+      if (!button) return;
+      const {action, id, mode, kind} = button.dataset;
+      const actions = {
+        'close-modal':closeModal, 'go-training':()=>nav('training'), 'go-rewards':()=>nav('rewards'), 'go-history':()=>nav('history'),
+        'start-training':startTraining, 'pause-training':pauseTraining, 'resume-training':resumeTraining,
+        'finish-training':openFinishTraining, 'cancel-training':cancelTraining, 'open-training-manual':openManualTraining,
+        'manual-mode':()=>toggleManualMode(mode), 'add-theme':()=>openThemeForm(), 'edit-theme':()=>openThemeForm(id),
+        'delete-theme':()=>deleteTheme(id), 'move-theme-up':()=>moveThemeUp(id),
+        'start-reward':startReward,'pause-reward':pauseReward,'resume-reward':resumeReward,'finish-reward':openFinishReward,'cancel-reward':cancelReward,
+        'use-fixed-reward':()=>useFixedReward(id,button),'use-calorie-reward':()=>useCalorieReward(id,button,'item'),'cash-calorie-reward':()=>useCalorieReward(id,button,'cash'),'open-calorie-input':openCalorieInput,'open-cash-usage':openCashUsage,
+        'add-reward':()=>openRewardForm(),'edit-reward':()=>openRewardForm(id),'delete-reward':()=>deleteReward(id),
+        'start-wait':startWait,'reset-wait':resetWait,'cancel-wait':cancelWait,'edit-wait-settings':openWaitSettings,'edit-level-settings':openLevelSettings,
+        'edit-history':()=>openHistoryEditor(kind,id),'delete-history':()=>deleteHistory(kind,id),'edit-display-settings':openDisplaySettings,
+        'point-adjustment':openPointAdjustment,'export-data':openExportData,'copy-export':copyExport,'download-export':downloadExport,'import-data':openImportData,'reset-all-data':resetAllData,
+        'apply-pwa-update':applyPwaUpdate
+      };
+      actions[action]?.();
+    });
+
+    document.addEventListener('change',event=>{
+      if(event.target.matches('[data-action="reward-type-change"]'))toggleRewardType(event.target.value);
+      if(event.target.id==='stats-period'){statsPeriod=event.target.value;renderStats();}
+    });
+
+    document.addEventListener('submit', event => {
+      event.preventDefault();
+      if (event.target.id === 'finish-training-form') submitFinishTraining(event.target);
+      if (event.target.id === 'manual-training-form') submitManualTraining(event.target);
+      if (event.target.id === 'confirm-manual-training-form') confirmManualTraining(event.target);
+      if (event.target.id === 'theme-form') submitTheme(event.target);
+      if (event.target.id === 'finish-reward-form') submitFinishReward(event.target);
+      if (event.target.id === 'reward-form') submitReward(event.target);
+      if (event.target.id === 'calorie-form') submitCalorie(event.target);
+      if (event.target.id === 'cash-usage-form') submitCashUsage(event.target);
+      if (event.target.id === 'wait-settings-form') submitWaitSettings(event.target);
+      if (event.target.id === 'level-settings-form') submitLevelSettings(event.target);
+      if (event.target.id === 'history-edit-form') saveHistoryEdit(event.target);
+      if (event.target.id === 'display-settings-form') submitDisplaySettings(event.target);
+      if (event.target.id === 'point-adjustment-form') submitPointAdjustment(event.target);
+      if (event.target.id === 'import-form') submitImport(event.target);
+    });
+    document.getElementById('modal-backdrop').addEventListener('click', event => { if (event.target.id === 'modal-backdrop') closeModal(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { state = loadState(); render(); liveTick(); } });
+    window.addEventListener('storage', event => { if (event.key === STORAGE_KEY) { state = loadState(); render(); } });
+    setInterval(liveTick, 1000);
+
+    window.__JINSEI_RPG__ = {
+      getState: () => structuredClone(state),
+      setState: next => { state = normalizeState(next); saveState(); render(); },
+      reset: () => { state = createDefaultState(); saveState(); render(); },
+      calculateTrainingPoints, pointSummary, activeTrainingElapsedMs, trainingTotals, commitTrainingHistoryEntry,
+      calculateRewardPointCost, activeRewardRawElapsedMs, activeRewardElapsedMs, rewardAffordableMs, commitRewardHistoryEntry,
+      calorieSummary, cashRewardSummary, commitCashUsageEntry,
+      rangeForPeriod, streakSummary, peakCalorieBalance, achievementConditions, waitTimerRemainingMs,
+      getLevel,
+      formatLongDuration,
+      validateImport, mergeState, exportedJson,
+      storageKey: STORAGE_KEY, version: SCHEMA_VERSION
+    };
+
+    saveState();
+    render();
+    registerPwa();
+  })();
+  </script>
+</body>
+</html>
