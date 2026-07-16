@@ -283,6 +283,31 @@ test('報酬タイマー終了画面に停止と精算ボタンがある', () =>
   truthy(html.includes('setInterval(rewardAlarmPulse,1800)'));
 });
 
+test('修業編集はブラウザ標準判定に阻まれず保存操作できる', () => {
+  truthy(html.includes('id="theme-form" class="form-grid" novalidate'));
+  truthy(html.includes('data-action="save-theme"'));
+  truthy(html.includes('name="secondsPerPoint" type="number" inputmode="decimal" min="0.01" step="any"'));
+});
+
+test('修業変更は小数秒も含めて状態へ反映', () => {
+  const NativeFormData=windowMock.FormData;
+  windowMock.FormData=class {
+    constructor(form){this.values=form.values;}
+    get(key){return this.values.has(key)?this.values.get(key):null;}
+    has(key){return this.values.has(key);}
+  };
+  try {
+    api.reset();
+    const theme=api.getState().trainingThemes[0];
+    api.submitTheme({values:new Map([
+      ['id',theme.id],['name','ドラム練習'],['description','更新テスト'],['icon','🥁'],['color','#68e1b5'],
+      ['secondsPerPoint','450.5'],['multiplier','1.2'],['fixedBonus','0'],['memo','保存済み'],['enabled','on'],['earnsPoints','on']
+    ])});
+    const updated=api.getState().trainingThemes.find(item=>item.id===theme.id);
+    truthy(updated.name==='ドラム練習');equal(updated.secondsPerPoint,450.5);equal(updated.multiplier,1.2);
+  } finally {windowMock.FormData=NativeFormData;}
+});
+
 test('カロリー報酬に通常使用と現金化の両ボタン', () => {
   truthy(html.includes('data-action="use-calorie-reward"'));
   truthy(html.includes('data-action="cash-calorie-reward"'));

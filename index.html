@@ -1442,31 +1442,39 @@
     function openThemeForm(id = null) {
       const theme = id ? getTheme(id) : null;
       openModal(theme ? '修業テーマを編集' : '修業テーマを追加', `
-        <form id="theme-form" class="form-grid">
+        <form id="theme-form" class="form-grid" novalidate>
           <input type="hidden" name="id" value="${esc(theme?.id || '')}">
           <div class="form-columns"><label>修業名<input name="name" maxlength="40" value="${esc(theme?.name || '')}" required></label><label>アイコン<input name="icon" maxlength="4" value="${esc(theme?.icon || '✦')}" required></label></div>
           <label>説明<input name="description" maxlength="100" value="${esc(theme?.description || '')}"></label>
-          <div class="form-columns"><label>色<input name="color" type="color" value="${esc(theme?.color || '#68e1b5')}"></label><label>1ポイントに必要な秒数<input name="secondsPerPoint" type="number" min="1" step="1" value="${num(theme?.secondsPerPoint,600)}" required></label></div>
+          <div class="form-columns"><label>色<input name="color" type="color" value="${esc(theme?.color || '#68e1b5')}"></label><label>1ポイントに必要な秒数<input name="secondsPerPoint" type="number" inputmode="decimal" min="0.01" step="any" value="${num(theme?.secondsPerPoint,600)}"></label></div>
           <div class="form-columns"><label>ポイント倍率<input name="multiplier" type="number" min="0" step="0.1" value="${num(theme?.multiplier,1)}" required></label><label>固定ボーナス<input name="fixedBonus" type="number" step="any" value="${num(theme?.fixedBonus)}" required></label></div>
           <label class="check-row"><input name="enabled" type="checkbox" ${theme?.enabled !== false ? 'checked' : ''}> 有効・一覧に表示</label>
           <label class="check-row"><input name="earnsPoints" type="checkbox" ${theme?.earnsPoints !== false ? 'checked' : ''}> 報酬ポイントを獲得する</label>
           <label class="check-row"><input name="isExercise" type="checkbox" ${theme?.isExercise ? 'checked' : ''}> 運動系の修業</label>
           <label>メモ<textarea name="memo">${esc(theme?.memo || '')}</textarea></label>
-          <button class="btn primary block" type="submit">保存</button>
+          <button class="btn primary block" type="button" data-action="save-theme">${theme?'変更を保存':'追加する'}</button>
           ${theme ? '<button class="btn danger block" type="button" data-action="delete-theme" data-id="'+esc(theme.id)+'">テーマを削除</button>' : ''}
         </form>`);
     }
     function submitTheme(form) {
+      if(!form)return;
       const data = new FormData(form);
       const id = String(data.get('id') || '');
       const existing = id ? getTheme(id) : null;
+      const name=String(data.get('name')||'').trim();
+      const secondsPerPoint=Number(data.get('secondsPerPoint'));
+      const multiplier=Number(data.get('multiplier'));
+      const fixedBonus=Number(data.get('fixedBonus'));
+      if(!name)return showToast('修業名を入力してください。');
+      if(!Number.isFinite(secondsPerPoint)||secondsPerPoint<=0)return showToast('1ポイントに必要な秒数を0より大きい数で入力してください。');
+      if(!Number.isFinite(multiplier)||multiplier<0)return showToast('ポイント倍率を0以上で入力してください。');
+      if(!Number.isFinite(fixedBonus))return showToast('固定ボーナスを数値で入力してください。');
       const updated = {
-        id: existing?.id || uid('theme'), name:String(data.get('name')).trim(), description:String(data.get('description')||''), icon:String(data.get('icon')||'✦'), color:String(data.get('color')||'#68e1b5'),
+        id: existing?.id || uid('theme'), name, description:String(data.get('description')||''), icon:String(data.get('icon')||'✦'), color:String(data.get('color')||'#68e1b5'),
         order:existing?.order ?? state.trainingThemes.length, enabled:data.has('enabled'), isExercise:data.has('isExercise'), earnsPoints:data.has('earnsPoints'), pointMode:'rate',
-        secondsPerPoint:Math.max(1,num(data.get('secondsPerPoint'),600)), multiplier:Math.max(0,num(data.get('multiplier'),1)), fixedBonus:num(data.get('fixedBonus')), memo:String(data.get('memo')||''),
+        secondsPerPoint, multiplier, fixedBonus, memo:String(data.get('memo')||''),
         createdAt:existing?.createdAt || isoNow(), updatedAt:isoNow()
       };
-      if (!updated.name) return showToast('修業名を入力してください。');
       if (existing) Object.assign(existing, updated); else state.trainingThemes.push(updated);
       saveState(); closeModal(); render(); showToast(existing ? '修業テーマを更新しました。' : '修業テーマを追加しました。');
     }
@@ -1570,7 +1578,7 @@
         'close-modal':closeModal, 'go-training':()=>nav('training'), 'go-rewards':()=>nav('rewards'), 'go-history':()=>nav('history'),
         'start-training':startTraining, 'pause-training':pauseTraining, 'resume-training':resumeTraining,
         'finish-training':openFinishTraining, 'cancel-training':cancelTraining, 'open-training-manual':openManualTraining,
-        'manual-mode':()=>toggleManualMode(mode), 'add-theme':()=>openThemeForm(), 'edit-theme':()=>openThemeForm(id),
+        'manual-mode':()=>toggleManualMode(mode), 'add-theme':()=>openThemeForm(), 'edit-theme':()=>openThemeForm(id), 'save-theme':()=>submitTheme(button.closest('form')),
         'delete-theme':()=>deleteTheme(id), 'move-theme-up':()=>moveThemeUp(id),
         'start-reward':startReward,'pause-reward':pauseReward,'resume-reward':resumeReward,'finish-reward':openFinishReward,'cancel-reward':cancelReward,
         'stop-reward-alarm':()=>stopRewardLimitAlarm(true),'stop-and-finish-reward':stopAndFinishReward,
@@ -1623,6 +1631,7 @@
       rangeForPeriod, streakSummary, peakCalorieBalance, achievementConditions, waitTimerRemainingMs,
       getLevel,
       formatLongDuration,
+      submitTheme,
       validateImport, mergeState, exportedJson,
       storageKey: STORAGE_KEY, version: SCHEMA_VERSION
     };

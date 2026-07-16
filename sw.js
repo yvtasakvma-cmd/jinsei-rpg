@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'jinsei-rpg-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v3`;
+const CACHE_NAME = `${CACHE_PREFIX}v4`;
 const APP_SHELL_PATHS = [
   './',
   './index.html',
